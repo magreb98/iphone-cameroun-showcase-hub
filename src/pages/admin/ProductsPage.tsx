@@ -84,7 +84,15 @@ const AdminProductsPage = () => {
 
   const handleOpenDialog = (product?: Product) => {
     if (product) {
-      setEditingProduct(product);
+      setEditingProduct({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        category: product.category,
+        inStock: product.inStock,
+        quantity: product.quantity || 0,
+        imageUrl: product.imageUrl
+      });
       setFormData({
         id: product.id,
         name: product.name,
@@ -142,15 +150,28 @@ const AdminProductsPage = () => {
     if (editingProduct) {
       // Update existing product
       const updatedProducts = products.map(p => 
-        p.id === formData.id ? { ...formData } : p
+        p.id === formData.id ? {
+          id: formData.id, // Ensure id is not optional for Product type
+          name: formData.name,
+          price: formData.price,
+          category: formData.category,
+          inStock: formData.inStock,
+          quantity: formData.quantity,
+          imageUrl: formData.imageUrl
+        } as Product : p
       );
       setProducts(updatedProducts);
       toast.success("Produit mis à jour avec succès");
     } else {
       // Add new product
-      const newProduct = {
-        ...formData,
-        id: Math.max(0, ...products.map(p => p.id)) + 1
+      const newProduct: Product = {
+        id: Math.max(0, ...products.map(p => p.id)) + 1, // Ensure id is not optional
+        name: formData.name,
+        price: formData.price,
+        category: formData.category,
+        inStock: formData.inStock,
+        quantity: formData.quantity,
+        imageUrl: formData.imageUrl
       };
       setProducts([...products, newProduct]);
       toast.success("Produit ajouté avec succès");

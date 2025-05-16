@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { filter } from "lucide-react";
+import { Filter } from "lucide-react";
 
 export interface FilterOptions {
   category: string | null;
@@ -73,7 +72,7 @@ const ProductFilter = ({ onFilterChange, categories, brands }: ProductFilterProp
           className="w-full flex items-center justify-center"
           onClick={() => setIsFilterOpen(!isFilterOpen)}
         >
-          <filter className="mr-2 h-4 w-4" />
+          <Filter className="mr-2 h-4 w-4" />
           {isFilterOpen ? "Masquer les filtres" : "Afficher les filtres"}
         </Button>
       </div>

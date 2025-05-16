@@ -3,13 +3,13 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 
 export interface Product {
-  id: number;
+  id: number; // This is required, not optional
   name: string;
   imageUrl: string;
   price: number;
   category: string;
   inStock: boolean;
-  quantity?: number;
+  quantity: number; // Changed from optional to required
 }
 
 interface ProductCardProps {
