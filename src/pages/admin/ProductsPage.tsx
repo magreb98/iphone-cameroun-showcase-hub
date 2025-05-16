@@ -1,5 +1,6 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -10,71 +11,70 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Product } from "@/components/products/ProductCard";
 import { Plus, Pencil, Trash } from "lucide-react";
-
-// Données fictives pour la démonstration
-const MOCK_PRODUCTS: Product[] = [
-  {
-    id: 1,
-    name: "iPhone 13 Pro Max",
-    imageUrl: "https://images.unsplash.com/photo-1632661674596-df8be070a5c5?auto=format&fit=crop&w=500",
-    price: 850000,
-    category: "iPhone",
-    inStock: true,
-    quantity: 10
-  },
-  {
-    id: 2,
-    name: "MacBook Pro 14",
-    imageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=500",
-    price: 1200000,
-    category: "MacBook",
-    inStock: true,
-    quantity: 5
-  },
-  {
-    id: 3,
-    name: "iPad Pro 12.9",
-    imageUrl: "https://images.unsplash.com/photo-1561154464-82e9adf32764?auto=format&fit=crop&w=500",
-    price: 700000,
-    category: "iPad",
-    inStock: false,
-    quantity: 0
-  },
-  {
-    id: 4,
-    name: "AirPods Pro",
-    imageUrl: "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?auto=format&fit=crop&w=500",
-    price: 120000,
-    category: "Accessory",
-    inStock: true,
-    quantity: 15
-  }
-];
-
-const categories = ["iPhone", "MacBook", "iPad", "Accessory"];
-
-interface ProductFormData {
-  id?: number;
-  name: string;
-  price: number;
-  category: string;
-  inStock: boolean;
-  quantity: number;
-  imageUrl: string;
-}
+import { getProducts, createProduct, updateProduct, deleteProduct, ProductFormData } from "@/api/products";
+import { getCategories } from "@/api/categories";
 
 const AdminProductsPage = () => {
-  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+  const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [editingProduct, setEditingProduct] = useState<ProductFormData | null>(null);
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
     price: 0,
-    category: "",
+    categoryId: 0,
     inStock: true,
     quantity: 0,
     imageUrl: ""
+  });
+
+  const { data: products = [], isLoading: isLoadingProducts } = useQuery({
+    queryKey: ['products'],
+    queryFn: getProducts
+  });
+
+  const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: getCategories
+  });
+
+  const createProductMutation = useMutation({
+    mutationFn: createProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success("Produit ajouté avec succès");
+      handleCloseDialog();
+    },
+    onError: (error) => {
+      toast.error("Erreur lors de l'ajout du produit");
+      console.error(error);
+    }
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: ProductFormData }) => 
+      updateProduct(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success("Produit mis à jour avec succès");
+      handleCloseDialog();
+    },
+    onError: (error) => {
+      toast.error("Erreur lors de la mise à jour du produit");
+      console.error(error);
+    }
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: deleteProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success("Produit supprimé avec succès");
+    },
+    onError: (error) => {
+      toast.error("Erreur lors de la suppression du produit");
+      console.error(error);
+    }
   });
 
   const filteredProducts = products.filter(product => 
@@ -84,11 +84,15 @@ const AdminProductsPage = () => {
 
   const handleOpenDialog = (product?: Product) => {
     if (product) {
+      // Find the categoryId from the category name
+      const categoryObj = categories.find(cat => cat.name === product.category);
+      const categoryId = categoryObj ? categoryObj.id : 0;
+      
       setEditingProduct({
         id: product.id,
         name: product.name,
         price: product.price,
-        category: product.category,
+        categoryId: categoryId,
         inStock: product.inStock,
         quantity: product.quantity || 0,
         imageUrl: product.imageUrl
@@ -97,7 +101,7 @@ const AdminProductsPage = () => {
         id: product.id,
         name: product.name,
         price: product.price,
-        category: product.category,
+        categoryId: categoryId,
         inStock: product.inStock,
         quantity: product.quantity || 0,
         imageUrl: product.imageUrl
@@ -107,7 +111,7 @@ const AdminProductsPage = () => {
       setFormData({
         name: "",
         price: 0,
-        category: "",
+        categoryId: 0,
         inStock: true,
         quantity: 0,
         imageUrl: ""
@@ -133,7 +137,7 @@ const AdminProductsPage = () => {
   const handleSelectChange = (value: string, field: string) => {
     setFormData({
       ...formData,
-      [field]: value
+      [field]: field === "categoryId" ? Number(value) : value
     });
   };
 
@@ -147,44 +151,33 @@ const AdminProductsPage = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (editingProduct) {
+    if (editingProduct && editingProduct.id) {
       // Update existing product
-      const updatedProducts = products.map(p => 
-        p.id === formData.id ? {
-          id: formData.id, // Ensure id is not optional for Product type
-          name: formData.name,
-          price: formData.price,
-          category: formData.category,
-          inStock: formData.inStock,
-          quantity: formData.quantity,
-          imageUrl: formData.imageUrl
-        } as Product : p
-      );
-      setProducts(updatedProducts);
-      toast.success("Produit mis à jour avec succès");
+      updateProductMutation.mutate({
+        id: editingProduct.id,
+        data: formData
+      });
     } else {
       // Add new product
-      const newProduct: Product = {
-        id: Math.max(0, ...products.map(p => p.id)) + 1, // Ensure id is not optional
-        name: formData.name,
-        price: formData.price,
-        category: formData.category,
-        inStock: formData.inStock,
-        quantity: formData.quantity,
-        imageUrl: formData.imageUrl
-      };
-      setProducts([...products, newProduct]);
-      toast.success("Produit ajouté avec succès");
+      createProductMutation.mutate(formData);
     }
-    
-    handleCloseDialog();
   };
 
   const handleDelete = (id: number) => {
-    const updatedProducts = products.filter(p => p.id !== id);
-    setProducts(updatedProducts);
-    toast.success("Produit supprimé avec succès");
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer ce produit?")) {
+      deleteProductMutation.mutate(id);
+    }
   };
+
+  if (isLoadingProducts || isLoadingCategories) {
+    return (
+      <AdminLayout title="Gestion des Produits">
+        <div className="flex justify-center items-center h-64">
+          <p>Chargement des données...</p>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout title="Gestion des Produits">
@@ -314,16 +307,16 @@ const AdminProductsPage = () => {
                   Catégorie
                 </Label>
                 <Select
-                  value={formData.category}
-                  onValueChange={(value) => handleSelectChange(value, "category")}
+                  value={formData.categoryId.toString()}
+                  onValueChange={(value) => handleSelectChange(value, "categoryId")}
                 >
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Sélectionnez une catégorie" />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
+                      <SelectItem key={category.id} value={category.id.toString()}>
+                        {category.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -382,8 +375,8 @@ const AdminProductsPage = () => {
               <Button type="button" variant="outline" onClick={handleCloseDialog}>
                 Annuler
               </Button>
-              <Button type="submit">
-                {editingProduct ? "Mettre à jour" : "Ajouter"}
+              <Button type="submit" disabled={createProductMutation.isPending || updateProductMutation.isPending}>
+                {createProductMutation.isPending || updateProductMutation.isPending ? "Traitement..." : (editingProduct ? "Mettre à jour" : "Ajouter")}
               </Button>
             </DialogFooter>
           </form>

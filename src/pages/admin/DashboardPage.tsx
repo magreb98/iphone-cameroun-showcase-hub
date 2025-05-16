@@ -1,58 +1,40 @@
 
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Product } from "@/components/products/ProductCard";
 import { ShoppingBag, Package, Tag, Search } from "lucide-react";
-
-// Données fictives pour la démonstration
-const MOCK_PRODUCTS: Product[] = [
-  {
-    id: 1,
-    name: "iPhone 13 Pro Max",
-    imageUrl: "https://images.unsplash.com/photo-1632661674596-df8be070a5c5?auto=format&fit=crop&w=500",
-    price: 850000,
-    category: "iPhone",
-    inStock: true,
-    quantity: 10
-  },
-  {
-    id: 2,
-    name: "MacBook Pro 14",
-    imageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=500",
-    price: 1200000,
-    category: "MacBook",
-    inStock: true,
-    quantity: 5
-  },
-  {
-    id: 3,
-    name: "iPad Pro 12.9",
-    imageUrl: "https://images.unsplash.com/photo-1561154464-82e9adf32764?auto=format&fit=crop&w=500",
-    price: 700000,
-    category: "iPad",
-    inStock: false,
-    quantity: 0
-  },
-  {
-    id: 4,
-    name: "AirPods Pro",
-    imageUrl: "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?auto=format&fit=crop&w=500",
-    price: 120000,
-    category: "Accessory",
-    inStock: true,
-    quantity: 15
-  }
-];
+import { getProducts } from "@/api/products";
+import { getCategories } from "@/api/categories";
 
 const DashboardPage = () => {
-  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+  const { data: products = [], isLoading: isLoadingProducts } = useQuery({
+    queryKey: ['products'],
+    queryFn: getProducts
+  });
+  
+  const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: getCategories
+  });
 
   // Calcul des statistiques
   const totalProducts = products.length;
   const productsInStock = products.filter(p => p.inStock).length;
-  const totalCategories = [...new Set(products.map(p => p.category))].length;
-  const averagePrice = products.reduce((sum, p) => sum + p.price, 0) / totalProducts;
+  const totalCategories = categories.length;
+  const averagePrice = products.length ? 
+    products.reduce((sum, p) => sum + p.price, 0) / totalProducts : 0;
+
+  if (isLoadingProducts || isLoadingCategories) {
+    return (
+      <AdminLayout title="Tableau de Bord">
+        <div className="flex justify-center items-center h-64">
+          <p>Chargement des données...</p>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout title="Tableau de Bord">
@@ -86,7 +68,7 @@ const DashboardPage = () => {
                 {productsInStock} / {totalProducts}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {((productsInStock / totalProducts) * 100).toFixed(0)}% disponibles
+                {totalProducts > 0 ? ((productsInStock / totalProducts) * 100).toFixed(0) : 0}% disponibles
               </p>
             </CardContent>
           </Card>
@@ -139,7 +121,7 @@ const DashboardPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {products.map((product) => (
+                {products.slice(0, 5).map((product) => (
                   <tr key={product.id} className="border-t border-gray-200 hover:bg-muted/50">
                     <td className="p-3">
                       <div className="flex items-center space-x-3">

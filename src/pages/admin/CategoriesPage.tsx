@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -7,56 +8,60 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Plus, Pencil, Trash } from "lucide-react";
-
-interface Category {
-  id: number;
-  name: string;
-  description: string;
-  productCount: number;
-}
-
-// Données fictives pour la démonstration
-const MOCK_CATEGORIES: Category[] = [
-  {
-    id: 1,
-    name: "iPhone",
-    description: "Les smartphones d'Apple",
-    productCount: 2
-  },
-  {
-    id: 2,
-    name: "MacBook",
-    description: "Les ordinateurs portables d'Apple",
-    productCount: 2
-  },
-  {
-    id: 3,
-    name: "iPad",
-    description: "Les tablettes d'Apple",
-    productCount: 2
-  },
-  {
-    id: 4,
-    name: "Accessory",
-    description: "Accessoires pour appareils Apple",
-    productCount: 2
-  }
-];
-
-interface CategoryFormData {
-  id?: number;
-  name: string;
-  description: string;
-}
+import { getCategories, createCategory, updateCategory, deleteCategory, Category, CategoryFormData } from "@/api/categories";
 
 const AdminCategoriesPage = () => {
-  const [categories, setCategories] = useState<Category[]>(MOCK_CATEGORIES);
+  const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [editingCategory, setEditingCategory] = useState<CategoryFormData | null>(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState<CategoryFormData>({
     name: "",
     description: ""
+  });
+
+  const { data: categories = [], isLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: getCategories
+  });
+  
+  const createCategoryMutation = useMutation({
+    mutationFn: createCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      toast.success("Catégorie ajoutée avec succès");
+      handleCloseDialog();
+    },
+    onError: (error) => {
+      toast.error("Erreur lors de l'ajout de la catégorie");
+      console.error(error);
+    }
+  });
+  
+  const updateCategoryMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: CategoryFormData }) => 
+      updateCategory(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      toast.success("Catégorie mise à jour avec succès");
+      handleCloseDialog();
+    },
+    onError: (error) => {
+      toast.error("Erreur lors de la mise à jour de la catégorie");
+      console.error(error);
+    }
+  });
+  
+  const deleteCategoryMutation = useMutation({
+    mutationFn: deleteCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      toast.success("Catégorie supprimée avec succès");
+    },
+    onError: (error) => {
+      toast.error("Erreur lors de la suppression de la catégorie");
+      console.error(error);
+    }
   });
 
   const filteredCategories = categories.filter(category => 
@@ -66,13 +71,8 @@ const AdminCategoriesPage = () => {
 
   const handleOpenDialog = (category?: Category) => {
     if (category) {
-      setEditingCategory({
-        id: category.id,
-        name: category.name,
-        description: category.description
-      });
+      setEditingCategory(category);
       setFormData({
-        id: category.id,
         name: category.name,
         description: category.description
       });
@@ -105,37 +105,31 @@ const AdminCategoriesPage = () => {
     
     if (editingCategory) {
       // Update existing category
-      const updatedCategories = categories.map(c => 
-        c.id === formData.id ? { ...c, ...formData } : c
-      );
-      setCategories(updatedCategories);
-      toast.success("Catégorie mise à jour avec succès");
+      updateCategoryMutation.mutate({
+        id: editingCategory.id,
+        data: formData
+      });
     } else {
       // Add new category
-      const newCategory = {
-        ...formData,
-        id: Math.max(0, ...categories.map(c => c.id)) + 1,
-        productCount: 0
-      };
-      setCategories([...categories, newCategory]);
-      toast.success("Catégorie ajoutée avec succès");
+      createCategoryMutation.mutate(formData);
     }
-    
-    handleCloseDialog();
   };
 
   const handleDelete = (id: number) => {
-    const category = categories.find(c => c.id === id);
-    
-    if (category && category.productCount > 0) {
-      toast.error(`Impossible de supprimer la catégorie "${category.name}" car elle contient des produits.`);
-      return;
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette catégorie?")) {
+      deleteCategoryMutation.mutate(id);
     }
-    
-    const updatedCategories = categories.filter(c => c.id !== id);
-    setCategories(updatedCategories);
-    toast.success("Catégorie supprimée avec succès");
   };
+
+  if (isLoading) {
+    return (
+      <AdminLayout title="Gestion des Catégories">
+        <div className="flex justify-center items-center h-64">
+          <p>Chargement des données...</p>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout title="Gestion des Catégories">
@@ -168,7 +162,7 @@ const AdminCategoriesPage = () => {
                 <tr key={category.id} className="border-t border-gray-200 hover:bg-muted/50">
                   <td className="p-3 font-medium">{category.name}</td>
                   <td className="p-3">{category.description}</td>
-                  <td className="p-3">{category.productCount}</td>
+                  <td className="p-3">{category.productCount || 0}</td>
                   <td className="p-3">
                     <div className="flex space-x-2">
                       <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(category)}>
@@ -177,9 +171,9 @@ const AdminCategoriesPage = () => {
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className={`text-red-500 hover:text-red-700 ${category.productCount > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`text-red-500 hover:text-red-700 ${(category.productCount || 0) > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                         onClick={() => handleDelete(category.id)}
-                        disabled={category.productCount > 0}
+                        disabled={(category.productCount || 0) > 0}
                       >
                         <Trash className="h-4 w-4" />
                       </Button>
@@ -239,8 +233,8 @@ const AdminCategoriesPage = () => {
               <Button type="button" variant="outline" onClick={handleCloseDialog}>
                 Annuler
               </Button>
-              <Button type="submit">
-                {editingCategory ? "Mettre à jour" : "Ajouter"}
+              <Button type="submit" disabled={createCategoryMutation.isPending || updateCategoryMutation.isPending}>
+                {createCategoryMutation.isPending || updateCategoryMutation.isPending ? "Traitement..." : (editingCategory ? "Mettre à jour" : "Ajouter")}
               </Button>
             </DialogFooter>
           </form>
