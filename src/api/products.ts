@@ -1,4 +1,3 @@
-
 import api from './index';
 import { Product } from '@/components/products/ProductCard';
 
@@ -12,13 +11,20 @@ export interface ProductFormData {
   quantity: number;
 }
 
-export interface ProductResponseWithCategory extends Product {
+export interface ProductResponseWithCategory {
+  id: number;
+  name: string;
+  price: number;
+  imageUrl: string;
+  categoryId: number;
+  inStock: boolean;
+  quantity: number;
   Category: {
     name: string;
   };
 }
 
-export const getProducts = async (): Promise<ProductResponseWithCategory[]> => {
+export const getProducts = async (): Promise<Product[]> => {
   const response = await api.get('/products');
   
   // Transform API response to match our Product interface
