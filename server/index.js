@@ -5,6 +5,8 @@ const { Sequelize } = require('sequelize');
 const productRoutes = require('./routes/products');
 const categoryRoutes = require('./routes/categories');
 const authRoutes = require('./routes/auth');
+const seedDatabase = require('./seedData');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -29,6 +31,9 @@ const sequelize = new Sequelize('iphone_cameroun', 'root', 'password', {
     // Sync models with database
     await sequelize.sync({ alter: true });
     console.log('Database synchronized');
+    
+    // Seed database with demo data
+    await seedDatabase();
   } catch (error) {
     console.error('Unable to connect to the database:', error);
   }
