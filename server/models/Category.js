@@ -1,6 +1,6 @@
 
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../index');
+const { sequelize } = require('../index.js').default;
 const Product = require('./Product');
 
 const Category = sequelize.define('Category', {

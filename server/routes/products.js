@@ -1,14 +1,15 @@
 
-const express = require('express');
-const router = express.Router();
-const Product = require('../models/Product');
-const Category = require('../models/Category');
-const { protect, admin } = require('../middleware/authMiddleware');
+import { Router } from 'express';
+import { findAll, findByPk, create } from '../models/Product';
+import Category from '../models/Category';
+import { protect, admin } from '../middleware/authMiddleware';
+
+const router = Router();
 
 // Get all products
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.findAll({
+    const products = await findAll({
       include: [{ model: Category, attributes: ['name'] }]
     });
     res.json(products);
@@ -20,7 +21,7 @@ router.get('/', async (req, res) => {
 // Get a single product
 router.get('/:id', async (req, res) => {
   try {
-    const product = await Product.findByPk(req.params.id, {
+    const product = await findByPk(req.params.id, {
       include: [{ model: Category, attributes: ['name'] }]
     });
     
@@ -39,7 +40,7 @@ router.post('/', protect, admin, async (req, res) => {
   try {
     const { name, price, imageUrl, categoryId, quantity, inStock } = req.body;
     
-    const product = await Product.create({
+    const product = await create({
       name,
       price,
       imageUrl,
@@ -57,7 +58,7 @@ router.post('/', protect, admin, async (req, res) => {
 // Update a product (Admin only)
 router.put('/:id', protect, admin, async (req, res) => {
   try {
-    const product = await Product.findByPk(req.params.id);
+    const product = await findByPk(req.params.id);
     
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
@@ -83,7 +84,7 @@ router.put('/:id', protect, admin, async (req, res) => {
 // Delete a product (Admin only)
 router.delete('/:id', protect, admin, async (req, res) => {
   try {
-    const product = await Product.findByPk(req.params.id);
+    const product = await findByPk(req.params.id);
     
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
@@ -97,4 +98,4 @@ router.delete('/:id', protect, admin, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

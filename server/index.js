@@ -1,22 +1,22 @@
 
-const express = require('express');
-const cors = require('cors');
-const { Sequelize } = require('sequelize');
-const productRoutes = require('./routes/products');
-const categoryRoutes = require('./routes/categories');
-const authRoutes = require('./routes/auth');
-const seedDatabase = require('./seedData');
-const bcrypt = require('bcryptjs');
+import express, { json } from 'express';
+import cors from 'cors';
+import { Sequelize } from 'sequelize';
+import productRoutes from './routes/products';
+import categoryRoutes from './routes/categories';
+import authRoutes from './routes/auth';
+import seedDatabase from './seedData';
+import bcrypt from 'bcryptjs';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(json());
 
 // Database connection
-const sequelize = new Sequelize('iphone_cameroun', 'root', 'password', {
+const sequelize = new Sequelize('iphone_cameroun', 'root', '', {
   host: 'localhost',
   dialect: 'mysql',
   logging: false
@@ -53,4 +53,4 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-module.exports = { sequelize };
+export default { sequelize };
