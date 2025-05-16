@@ -33,7 +33,7 @@ const AdminLayout = ({ children, title }: AdminLayoutProps) => {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
-        <Sidebar className="border-r border-gray-200" collapsible>
+        <Sidebar className="border-r border-gray-200" collapsible="icon">
           <div className="p-4 border-b">
             <h2 className="font-semibold text-lg">iPhone Cameroun</h2>
             <p className="text-sm text-gray-500">Panel Admin</p>
