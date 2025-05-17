@@ -1,6 +1,12 @@
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const { spawn } = require('child_process');
-const path = require('path');
 
 // Log message
 console.log('Starting iPhone Cameroun application...');
