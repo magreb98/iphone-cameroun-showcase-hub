@@ -35,6 +35,18 @@ const Product = sequelize.define('Product', {
       model: 'Categories',
       key: 'id'
     }
+  },
+  isOnPromotion: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  promotionPrice: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  promotionEndDate: {
+    type: DataTypes.DATE,
+    allowNull: true
   }
 }, {
   timestamps: true

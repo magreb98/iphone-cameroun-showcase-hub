@@ -1,14 +1,8 @@
-import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import cors from 'cors';
-import { Sequelize } from 'sequelize';
-import productRoutes from './routes/products';
-import categoryRoutes from './routes/categories';
-import authRoutes from './routes/auth';
-import seedDatabase from './seedData';
-import bcrypt from 'bcryptjs';
+
+const express = require('express');
+const cors = require('cors');
+const { Sequelize } = require('sequelize');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -37,17 +31,23 @@ const sequelize = new Sequelize('iphone_cameroun', 'root', '', {
     await sequelize.sync({ alter: true });
     console.log('Database synchronized');
     
+    // Import routes after models are defined and synced
+    const productRoutes = require('./routes/products');
+    const categoryRoutes = require('./routes/categories');
+    const authRoutes = require('./routes/auth');
+    
+    // Routes
+    app.use('/api/products', productRoutes);
+    app.use('/api/categories', categoryRoutes);
+    app.use('/api/auth', authRoutes);
+    
     // Seed database with demo data
+    const seedDatabase = require('./seedData');
     await seedDatabase();
   } catch (error) {
     console.error('Unable to connect to the database:', error);
   }
 })();
-
-// Routes
-app.use('/api/products', productRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/auth', authRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -58,4 +58,4 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-export default { sequelize };
+module.exports = { sequelize };

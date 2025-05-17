@@ -1,3 +1,4 @@
+
 import api from './index';
 import { Product } from '@/components/products/ProductCard';
 
@@ -9,6 +10,9 @@ export interface ProductFormData {
   categoryId: number;
   inStock: boolean;
   quantity: number;
+  isOnPromotion?: boolean;
+  promotionPrice?: number;
+  promotionEndDate?: string;
 }
 
 export interface ProductResponseWithCategory {
@@ -19,6 +23,9 @@ export interface ProductResponseWithCategory {
   categoryId: number;
   inStock: boolean;
   quantity: number;
+  isOnPromotion: boolean;
+  promotionPrice: number | null;
+  promotionEndDate: string | null;
   Category: {
     name: string;
   };
@@ -35,7 +42,10 @@ export const getProducts = async (): Promise<Product[]> => {
     imageUrl: product.imageUrl,
     category: product.Category.name,
     inStock: product.inStock,
-    quantity: product.quantity
+    quantity: product.quantity,
+    isOnPromotion: product.isOnPromotion,
+    promotionPrice: product.promotionPrice,
+    promotionEndDate: product.promotionEndDate
   }));
   
   return products;
@@ -52,7 +62,10 @@ export const getProduct = async (id: number): Promise<Product> => {
     imageUrl: response.data.imageUrl,
     category: response.data.Category.name,
     inStock: response.data.inStock,
-    quantity: response.data.quantity
+    quantity: response.data.quantity,
+    isOnPromotion: response.data.isOnPromotion,
+    promotionPrice: response.data.promotionPrice,
+    promotionEndDate: response.data.promotionEndDate
   };
   
   return product;
@@ -65,6 +78,15 @@ export const createProduct = async (productData: ProductFormData): Promise<Produ
 
 export const updateProduct = async (id: number, productData: ProductFormData): Promise<ProductResponseWithCategory> => {
   const response = await api.put(`/products/${id}`, productData);
+  return response.data;
+};
+
+export const togglePromotion = async (id: number, promotionData: {
+  isOnPromotion: boolean;
+  promotionPrice?: number;
+  promotionEndDate?: string;
+}): Promise<ProductResponseWithCategory> => {
+  const response = await api.patch(`/products/${id}/toggle-promotion`, promotionData);
   return response.data;
 };
 
