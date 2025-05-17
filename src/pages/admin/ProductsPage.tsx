@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -10,15 +10,17 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Product } from "@/components/products/ProductCard";
-import { Plus, Pencil, Trash } from "lucide-react";
-import { getProducts, createProduct, updateProduct, deleteProduct, ProductFormData } from "@/api/products";
+import { Plus, Pencil, Trash, Tag } from "lucide-react";
+import { getProducts, createProduct, updateProduct, deleteProduct, togglePromotion, ProductFormData } from "@/api/products";
 import { getCategories } from "@/api/categories";
 
 const AdminProductsPage = () => {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isPromotionDialogOpen, setIsPromotionDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [editingProduct, setEditingProduct] = useState<ProductFormData | null>(null);
+  const [promotionProduct, setPromotionProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
     price: 0,
@@ -26,6 +28,11 @@ const AdminProductsPage = () => {
     inStock: true,
     quantity: 0,
     imageUrl: ""
+  });
+  const [promotionData, setPromotionData] = useState({
+    isOnPromotion: false,
+    promotionPrice: 0,
+    promotionEndDate: ""
   });
 
   const { data: products = [], isLoading: isLoadingProducts } = useQuery({
@@ -77,6 +84,20 @@ const AdminProductsPage = () => {
     }
   });
 
+  const togglePromotionMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: typeof promotionData }) => 
+      togglePromotion(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success("Promotion mise à jour avec succès");
+      handleClosePromotionDialog();
+    },
+    onError: (error) => {
+      toast.error("Erreur lors de la mise à jour de la promotion");
+      console.error(error);
+    }
+  });
+
   const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.category.toLowerCase().includes(searchQuery.toLowerCase())
@@ -95,7 +116,10 @@ const AdminProductsPage = () => {
         categoryId: categoryId,
         inStock: product.inStock,
         quantity: product.quantity || 0,
-        imageUrl: product.imageUrl
+        imageUrl: product.imageUrl,
+        isOnPromotion: product.isOnPromotion,
+        promotionPrice: product.promotionPrice,
+        promotionEndDate: product.promotionEndDate
       });
       setFormData({
         id: product.id,
@@ -104,7 +128,10 @@ const AdminProductsPage = () => {
         categoryId: categoryId,
         inStock: product.inStock,
         quantity: product.quantity || 0,
-        imageUrl: product.imageUrl
+        imageUrl: product.imageUrl,
+        isOnPromotion: product.isOnPromotion,
+        promotionPrice: product.promotionPrice,
+        promotionEndDate: product.promotionEndDate
       });
     } else {
       setEditingProduct(null);
@@ -120,9 +147,24 @@ const AdminProductsPage = () => {
     setIsDialogOpen(true);
   };
 
+  const handleOpenPromotionDialog = (product: Product) => {
+    setPromotionProduct(product);
+    setPromotionData({
+      isOnPromotion: product.isOnPromotion || false,
+      promotionPrice: product.promotionPrice || Math.round(product.price * 0.9), // Default 10% off
+      promotionEndDate: product.promotionEndDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // Default 7 days
+    });
+    setIsPromotionDialogOpen(true);
+  };
+
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingProduct(null);
+  };
+
+  const handleClosePromotionDialog = () => {
+    setIsPromotionDialogOpen(false);
+    setPromotionProduct(null);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -130,6 +172,15 @@ const AdminProductsPage = () => {
     
     setFormData({
       ...formData,
+      [name]: type === "number" ? Number(value) : value
+    });
+  };
+
+  const handlePromotionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type } = e.target;
+    
+    setPromotionData({
+      ...promotionData,
       [name]: type === "number" ? Number(value) : value
     });
   };
@@ -148,6 +199,13 @@ const AdminProductsPage = () => {
     });
   };
 
+  const handlePromotionSwitchChange = (checked: boolean) => {
+    setPromotionData({
+      ...promotionData,
+      isOnPromotion: checked
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -160,6 +218,17 @@ const AdminProductsPage = () => {
     } else {
       // Add new product
       createProductMutation.mutate(formData);
+    }
+  };
+
+  const handlePromotionSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (promotionProduct && promotionProduct.id) {
+      togglePromotionMutation.mutate({
+        id: promotionProduct.id,
+        data: promotionData
+      });
     }
   };
 
@@ -204,6 +273,7 @@ const AdminProductsPage = () => {
                 <th className="p-3 text-left font-medium">Prix (FCFA)</th>
                 <th className="p-3 text-left font-medium">Stock</th>
                 <th className="p-3 text-left font-medium">Statut</th>
+                <th className="p-3 text-left font-medium">Promotion</th>
                 <th className="p-3 text-left font-medium">Actions</th>
               </tr>
             </thead>
@@ -223,7 +293,17 @@ const AdminProductsPage = () => {
                     </div>
                   </td>
                   <td className="p-3">{product.category}</td>
-                  <td className="p-3">{product.price.toLocaleString()}</td>
+                  <td className="p-3">
+                    {product.isOnPromotion && product.promotionPrice ? (
+                      <div>
+                        <span className="line-through text-gray-500">{product.price.toLocaleString()}</span>
+                        <br />
+                        <span className="font-medium text-red-600">{product.promotionPrice.toLocaleString()}</span>
+                      </div>
+                    ) : (
+                      product.price.toLocaleString()
+                    )}
+                  </td>
                   <td className="p-3">{product.quantity}</td>
                   <td className="p-3">
                     {product.inStock ? (
@@ -237,7 +317,26 @@ const AdminProductsPage = () => {
                     )}
                   </td>
                   <td className="p-3">
+                    {product.isOnPromotion ? (
+                      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-orange-100 text-orange-800">
+                        En promotion
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-800">
+                        Standard
+                      </span>
+                    )}
+                  </td>
+                  <td className="p-3">
                     <div className="flex space-x-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleOpenPromotionDialog(product)}
+                        className="text-orange-500 hover:text-orange-700"
+                      >
+                        <Tag className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(product)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -377,6 +476,102 @@ const AdminProductsPage = () => {
               </Button>
               <Button type="submit" disabled={createProductMutation.isPending || updateProductMutation.isPending}>
                 {createProductMutation.isPending || updateProductMutation.isPending ? "Traitement..." : (editingProduct ? "Mettre à jour" : "Ajouter")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Promotion Dialog */}
+      <Dialog open={isPromotionDialogOpen} onOpenChange={setIsPromotionDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Gérer la promotion
+            </DialogTitle>
+            <DialogDescription>
+              {promotionProduct?.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handlePromotionSubmit} className="space-y-4">
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="isOnPromotion" className="text-right">
+                  Activer la promotion
+                </Label>
+                <div className="col-span-3 flex items-center space-x-2">
+                  <Switch
+                    id="isOnPromotion"
+                    checked={promotionData.isOnPromotion}
+                    onCheckedChange={handlePromotionSwitchChange}
+                  />
+                  <Label htmlFor="isOnPromotion">
+                    {promotionData.isOnPromotion ? "Promotion active" : "Pas de promotion"}
+                  </Label>
+                </div>
+              </div>
+
+              {promotionData.isOnPromotion && (
+                <>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="promotionPrice" className="text-right">
+                      Prix promotionnel
+                    </Label>
+                    <Input
+                      id="promotionPrice"
+                      name="promotionPrice"
+                      type="number"
+                      value={promotionData.promotionPrice}
+                      onChange={handlePromotionChange}
+                      className="col-span-3"
+                      required={promotionData.isOnPromotion}
+                      min="0"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="promotionEndDate" className="text-right">
+                      Date de fin
+                    </Label>
+                    <Input
+                      id="promotionEndDate"
+                      name="promotionEndDate"
+                      type="date"
+                      value={promotionData.promotionEndDate}
+                      onChange={handlePromotionChange}
+                      className="col-span-3"
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+
+                  {promotionProduct && (
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <div className="text-right text-sm text-gray-500">
+                        Économie:
+                      </div>
+                      <div className="col-span-3">
+                        <span className="text-red-600 font-medium">
+                          {promotionProduct.price - promotionData.promotionPrice} FCFA
+                          ({Math.round(((promotionProduct.price - promotionData.promotionPrice) / promotionProduct.price) * 100)}%)
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleClosePromotionDialog}>
+                Annuler
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={togglePromotionMutation.isPending}
+                className={promotionData.isOnPromotion ? "bg-orange-600 hover:bg-orange-700" : undefined}
+              >
+                {togglePromotionMutation.isPending ? "Traitement..." : "Enregistrer"}
               </Button>
             </DialogFooter>
           </form>

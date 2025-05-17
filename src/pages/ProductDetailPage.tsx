@@ -1,58 +1,42 @@
 
 import { useParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Product } from "@/components/products/ProductCard";
+import { Tag } from "lucide-react";
 import { toast } from "sonner";
-
-// Données fictives pour la démonstration
-const MOCK_PRODUCTS: Product[] = [
-  {
-    id: 1,
-    name: "iPhone 13 Pro Max",
-    imageUrl: "https://images.unsplash.com/photo-1632661674596-df8be070a5c5?auto=format&fit=crop&w=500",
-    price: 850000,
-    category: "iPhone",
-    inStock: true,
-    quantity: 10
-  },
-  {
-    id: 2,
-    name: "MacBook Pro 14",
-    imageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=500",
-    price: 1200000,
-    category: "MacBook",
-    inStock: true,
-    quantity: 5
-  },
-  {
-    id: 3,
-    name: "iPad Pro 12.9",
-    imageUrl: "https://images.unsplash.com/photo-1561154464-82e9adf32764?auto=format&fit=crop&w=500",
-    price: 700000,
-    category: "iPad",
-    inStock: false,
-    quantity: 0
-  },
-  {
-    id: 4,
-    name: "AirPods Pro",
-    imageUrl: "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?auto=format&fit=crop&w=500",
-    price: 120000,
-    category: "Accessory",
-    inStock: true,
-    quantity: 15
-  }
-];
+import { getProduct } from "@/api/products";
 
 const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const [selectedImage, setSelectedImage] = useState(0);
+
+  const { data: product, isLoading } = useQuery({
+    queryKey: ['product', id],
+    queryFn: () => getProduct(Number(id)),
+    enabled: !!id
+  });
   
-  // Trouver le produit par ID
-  const product = MOCK_PRODUCTS.find(p => p.id === Number(id));
+  const isPromotionValid = 
+    product?.isOnPromotion && 
+    product?.promotionPrice && 
+    (!product?.promotionEndDate || new Date(product.promotionEndDate) > new Date());
+  
+  const displayPrice = isPromotionValid ? product?.promotionPrice : product?.price;
+  
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto px-4 py-20">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold mb-4">Chargement du produit...</h1>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
   
   if (!product) {
     return (
@@ -84,12 +68,20 @@ const ProductDetailPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           {/* Images */}
           <div className="space-y-4">
-            <div className="aspect-square overflow-hidden rounded-lg bg-gray-100">
+            <div className="aspect-square overflow-hidden rounded-lg bg-gray-100 relative">
               <img
                 src={images[selectedImage]}
                 alt={product.name}
                 className="w-full h-full object-contain"
               />
+              {isPromotionValid && (
+                <div className="absolute top-0 left-0 bg-red-600 text-white py-1 px-3 flex items-center">
+                  <Tag className="w-4 h-4 mr-2" />
+                  <span className="font-medium">
+                    -{Math.round(((product.price - (product.promotionPrice || 0)) / product.price) * 100)}%
+                  </span>
+                </div>
+              )}
             </div>
             
             <div className="flex space-x-2 overflow-x-auto pb-2">
@@ -115,9 +107,22 @@ const ProductDetailPage = () => {
           <div className="space-y-6">
             <div>
               <h1 className="text-3xl font-bold mb-2 text-apple-dark">{product.name}</h1>
-              <p className="text-xl font-semibold text-apple-blue">
-                {product.price.toLocaleString()} FCFA
-              </p>
+              <div className="flex items-center space-x-3">
+                {isPromotionValid ? (
+                  <>
+                    <p className="text-xl font-semibold text-red-600">
+                      {displayPrice?.toLocaleString()} FCFA
+                    </p>
+                    <p className="text-gray-500 line-through">
+                      {product.price.toLocaleString()} FCFA
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xl font-semibold text-apple-blue">
+                    {displayPrice?.toLocaleString()} FCFA
+                  </p>
+                )}
+              </div>
             </div>
             
             <div className="flex items-center space-x-3">
@@ -137,6 +142,18 @@ const ProductDetailPage = () => {
                 </span>
               )}
             </div>
+            
+            {isPromotionValid && product.promotionEndDate && (
+              <div className="bg-orange-50 border border-orange-200 rounded p-3 flex items-center space-x-2">
+                <Tag className="w-4 h-4 text-orange-600" />
+                <div>
+                  <p className="text-sm font-medium text-orange-800">Offre spéciale</p>
+                  <p className="text-xs text-orange-600">
+                    Promotion valable jusqu'au {new Date(product.promotionEndDate).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            )}
             
             <div className="space-y-4 border-t border-b py-4">
               <h3 className="font-semibold text-lg">Description</h3>
