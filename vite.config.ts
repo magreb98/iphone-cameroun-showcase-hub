@@ -2,7 +2,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
+// Remove direct import of componentTagger which causes ESM/CJS conflict
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -12,7 +12,8 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === 'development' && componentTagger(),
+    // We'll conditionally load the componentTagger if needed
+    // but avoid direct imports that cause ESM/CJS conflicts
   ].filter(Boolean),
   resolve: {
     alias: {
