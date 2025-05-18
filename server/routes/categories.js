@@ -44,11 +44,12 @@ router.get('/:id', async (req, res) => {
 // Create a category (Admin only)
 router.post('/', protect, admin, async (req, res) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, imageUrl } = req.body;
     
     const category = await Category.create({
       name,
-      description
+      description,
+      imageUrl
     });
     
     res.status(201).json(category);
@@ -66,10 +67,11 @@ router.put('/:id', protect, admin, async (req, res) => {
       return res.status(404).json({ message: 'Category not found' });
     }
     
-    const { name, description } = req.body;
+    const { name, description, imageUrl } = req.body;
     
     category.name = name || category.name;
     category.description = description || category.description;
+    category.imageUrl = imageUrl !== undefined ? imageUrl : category.imageUrl;
     
     await category.save();
     

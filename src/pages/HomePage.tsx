@@ -1,10 +1,20 @@
 
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
+import { getCategories } from "@/api/categories";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 const HomePage = () => {
+  const { data: categories = [], isLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: getCategories
+  });
+
+  const defaultCategoryImage = "https://images.unsplash.com/photo-1575695342320-d2d2d2f9b73f?auto=format&fit=crop&w=500";
+
   return (
     <MainLayout>
       {/* Hero Section */}
@@ -45,55 +55,51 @@ const HomePage = () => {
       {/* Featured Categories */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="section-title text-center mb-12">Nos Catégories</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                name: "iPhones",
-                image: "https://images.unsplash.com/photo-1575695342320-d2d2d2f9b73f?auto=format&fit=crop&w=500",
-                link: "/products?category=iPhone"
-              },
-              {
-                name: "MacBooks",
-                image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=500",
-                link: "/products?category=MacBook"
-              },
-              {
-                name: "iPads",
-                image: "https://images.unsplash.com/photo-1561154464-82e9adf32764?auto=format&fit=crop&w=500",
-                link: "/products?category=iPad"
-              },
-              {
-                name: "Accessoires",
-                image: "https://images.unsplash.com/photo-1608156639585-b3a032e39d60?auto=format&fit=crop&w=500",
-                link: "/products?category=Accessory"
-              }
-            ].map((category) => (
-              <Link 
-                to={category.link} 
-                key={category.name}
-                className="group"
-              >
-                <div className="relative overflow-hidden rounded-lg aspect-square bg-gray-100">
-                  <img 
-                    src={category.image} 
-                    alt={category.name} 
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex items-end p-6">
-                    <h3 className="text-white text-xl font-semibold">{category.name}</h3>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <h2 className="text-3xl font-bold text-center mb-12">Nos Catégories</h2>
+          
+          {isLoading ? (
+            <div className="flex justify-center items-center h-48">
+              <p>Chargement des catégories...</p>
+            </div>
+          ) : (
+            <div className="relative px-10">
+              <Carousel>
+                <CarouselContent>
+                  {categories.length > 0 ? categories.map((category) => (
+                    <CarouselItem key={category.id} className="md:basis-1/2 lg:basis-1/4">
+                      <Link to={`/products?category=${category.id}`} className="group">
+                        <div className="relative overflow-hidden rounded-lg aspect-square bg-gray-100">
+                          <img 
+                            src={category.imageUrl || defaultCategoryImage} 
+                            alt={category.name} 
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex items-end p-6">
+                            <h3 className="text-white text-xl font-semibold">{category.name}</h3>
+                          </div>
+                        </div>
+                      </Link>
+                    </CarouselItem>
+                  )) : (
+                    <CarouselItem className="basis-full">
+                      <div className="text-center py-12">
+                        <p className="text-muted-foreground">Aucune catégorie trouvée</p>
+                      </div>
+                    </CarouselItem>
+                  )}
+                </CarouselContent>
+                <CarouselPrevious className="-left-5" />
+                <CarouselNext className="-right-5" />
+              </Carousel>
+            </div>
+          )}
         </div>
       </section>
 
       {/* Why Choose Us */}
       <section className="py-16 bg-apple-gray">
         <div className="container mx-auto px-4">
-          <h2 className="section-title text-center mb-12">Pourquoi Nous Choisir ?</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">Pourquoi Nous Choisir ?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {

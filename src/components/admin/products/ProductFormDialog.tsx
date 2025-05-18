@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Image, Link } from "lucide-react";
 import { createProduct, updateProduct, ProductFormData } from "@/api/products";
 import { Product } from "@/components/products/ProductCard";
 
@@ -33,10 +35,13 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
     quantity: 0,
     imageUrl: ""
   });
+  const [imageTab, setImageTab] = useState<"url" | "upload">("url");
+  const [localImage, setLocalImage] = useState<File | null>(null);
 
   useEffect(() => {
     if (editingProduct) {
       setFormData(editingProduct);
+      setImageTab("url"); // Default to URL tab when editing
     } else {
       setFormData({
         name: "",
@@ -47,6 +52,7 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
         imageUrl: ""
       });
     }
+    setLocalImage(null);
   }, [editingProduct]);
 
   const createProductMutation = useMutation({
@@ -78,6 +84,7 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
 
   const handleCloseDialog = () => {
     onOpenChange(false);
+    setLocalImage(null);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,18 +110,56 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      setLocalImage(file);
+      
+      // Create a URL for the image preview
+      const imageUrl = URL.createObjectURL(file);
+      setFormData({
+        ...formData,
+        imageUrl: imageUrl
+      });
+    }
+  };
+
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    let finalFormData = {...formData};
+    
+    // If we have a local image, convert it to base64
+    if (imageTab === "upload" && localImage) {
+      try {
+        const base64Image = await convertFileToBase64(localImage);
+        finalFormData.imageUrl = base64Image;
+      } catch (error) {
+        toast.error("Erreur lors de la conversion de l'image");
+        console.error(error);
+        return;
+      }
+    }
     
     if (editingProduct && editingProduct.id) {
       // Update existing product
       updateProductMutation.mutate({
         id: editingProduct.id,
-        data: formData
+        data: finalFormData
       });
     } else {
       // Add new product
-      createProductMutation.mutate(formData);
+      createProductMutation.mutate(finalFormData);
     }
   };
 
@@ -216,18 +261,51 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="imageUrl" className="text-right">
-                URL de l'image
+              <Label className="text-right">
+                Image
               </Label>
-              <Input
-                id="imageUrl"
-                name="imageUrl"
-                value={formData.imageUrl}
-                onChange={handleChange}
-                className="col-span-3"
-                required
-                placeholder="https://example.com/image.jpg"
-              />
+              <div className="col-span-3">
+                <Tabs value={imageTab} onValueChange={(value) => setImageTab(value as "url" | "upload")} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="url" className="flex items-center">
+                      <Link className="h-4 w-4 mr-2" />
+                      URL
+                    </TabsTrigger>
+                    <TabsTrigger value="upload" className="flex items-center">
+                      <Image className="h-4 w-4 mr-2" />
+                      Upload
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="url" className="mt-2">
+                    <Input
+                      id="imageUrl"
+                      name="imageUrl"
+                      placeholder="https://example.com/image.jpg"
+                      value={imageTab === "url" ? formData.imageUrl : ""}
+                      onChange={handleChange}
+                    />
+                  </TabsContent>
+                  <TabsContent value="upload" className="mt-2">
+                    <Input
+                      id="imageUpload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                    />
+                  </TabsContent>
+                </Tabs>
+
+                {formData.imageUrl && (
+                  <div className="mt-4">
+                    <p className="text-sm text-muted-foreground mb-1">Aperçu:</p>
+                    <img 
+                      src={formData.imageUrl} 
+                      alt="Aperçu" 
+                      className="h-24 object-contain border rounded"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           

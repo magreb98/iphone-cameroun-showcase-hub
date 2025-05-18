@@ -1,5 +1,5 @@
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -14,18 +14,24 @@ interface AdminLayoutProps {
 
 const AdminLayout = ({ children, title }: AdminLayoutProps) => {
   const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   // Vérification du token d'authentification
   useEffect(() => {
     const token = localStorage.getItem("admin_token");
-    if (!token) {
-      toast.error("Veuillez vous connecter pour accéder à cette page");
-      navigate("/admin");
+    if (token) {
+      setIsAuthenticated(true);
+    } else {
+      if (window.location.pathname !== "/admin") {
+        toast.error("Veuillez vous connecter pour accéder à cette page");
+        navigate("/admin");
+      }
     }
   }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("admin_token");
+    setIsAuthenticated(false);
     toast.success("Déconnexion réussie");
     navigate("/admin");
   };

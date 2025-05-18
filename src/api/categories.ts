@@ -5,12 +5,14 @@ export interface Category {
   id: number;
   name: string;
   description: string;
+  imageUrl?: string;
   productCount?: number;
 }
 
 export interface CategoryFormData {
   name: string;
   description: string;
+  imageUrl?: string;
 }
 
 export const getCategories = async (): Promise<Category[]> => {
