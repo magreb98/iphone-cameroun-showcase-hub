@@ -31,11 +31,32 @@ export interface ProductResponseWithCategory {
   };
 }
 
-export const getProducts = async (): Promise<Product[]> => {
-  const response = await api.get('/products');
+export interface PaginationData {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+  hasMore: boolean;
+}
+
+export interface ProductsResponse {
+  products: ProductResponseWithCategory[];
+  pagination: PaginationData;
+}
+
+export const getProducts = async (page = 1, limit = 12, categoryId?: number): Promise<{products: Product[], pagination: PaginationData}> => {
+  const params = new URLSearchParams();
+  params.append('page', page.toString());
+  params.append('limit', limit.toString());
+  
+  if (categoryId) {
+    params.append('category', categoryId.toString());
+  }
+  
+  const response = await api.get(`/products?${params.toString()}`);
   
   // Transform API response to match our Product interface
-  const products: Product[] = response.data.map((product: ProductResponseWithCategory) => ({
+  const products: Product[] = response.data.products.map((product: ProductResponseWithCategory) => ({
     id: product.id,
     name: product.name,
     price: product.price,
@@ -48,7 +69,10 @@ export const getProducts = async (): Promise<Product[]> => {
     promotionEndDate: product.promotionEndDate
   }));
   
-  return products;
+  return {
+    products,
+    pagination: response.data.pagination
+  };
 };
 
 export const getProduct = async (id: number): Promise<Product> => {

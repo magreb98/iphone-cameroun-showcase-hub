@@ -6,13 +6,45 @@ const { protect, admin } = require('../middleware/authMiddleware');
 
 const router = Router();
 
-// Get all products
+// Get all products with pagination
 router.get('/', async (req, res) => {
   try {
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const offset = (page - 1) * limit;
+    
+    // Category filter
+    const categoryId = req.query.category ? parseInt(req.query.category) : null;
+    
+    // Build the where clause
+    const whereClause = {};
+    if (categoryId) {
+      whereClause.categoryId = categoryId;
+    }
+    
+    // Get total count for pagination
+    const count = await Product.count({ where: whereClause });
+    
+    // Fetch products with pagination
     const products = await Product.findAll({
-      include: [{ model: Category, attributes: ['name'] }]
+      where: whereClause,
+      limit,
+      offset,
+      include: [{ model: Category, attributes: ['name'] }],
+      order: [['createdAt', 'DESC']]
     });
-    res.json(products);
+    
+    res.json({
+      products,
+      pagination: {
+        total: count,
+        page,
+        limit,
+        pages: Math.ceil(count / limit),
+        hasMore: page < Math.ceil(count / limit)
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -7,18 +7,42 @@ import ProductCard, { Product } from "@/components/products/ProductCard";
 import ProductFilter, { FilterOptions } from "@/components/products/ProductFilter";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { getProducts } from "@/api/products";
+import { getProducts, PaginationData } from "@/api/products";
 import { getCategories } from "@/api/categories";
+import { 
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
+} from "@/components/ui/pagination";
 
 const ProductsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(parseInt(searchParams.get("page") || "1"));
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  
+  // Get the category ID from URL if present
+  const categoryParam = searchParams.get("category");
+  const categoryId = categoryParam ? parseInt(categoryParam) : undefined;
 
-  const { data: products = [], isLoading: isLoadingProducts } = useQuery({
-    queryKey: ['products'],
-    queryFn: getProducts
+  // Fetch products with pagination and optional category filter
+  const { data, isLoading: isLoadingProducts } = useQuery({
+    queryKey: ['products', page, categoryId],
+    queryFn: () => getProducts(page, 12, categoryId)
   });
+  
+  const products = data?.products || [];
+  const pagination: PaginationData = data?.pagination || {
+    total: 0,
+    page: 1,
+    limit: 12,
+    pages: 1,
+    hasMore: false
+  };
   
   const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
     queryKey: ['categories'],
@@ -30,66 +54,65 @@ const ProductsPage = () => {
   const brands = ["Apple"]; // Hardcoded pour l'instant, pourrait venir de l'API
 
   useEffect(() => {
-    // Initialiser les produits filtrés avec tous les produits
-    setFilteredProducts(products);
+    // Update page number when URL changes
+    const pageParam = searchParams.get("page");
+    if (pageParam) {
+      setPage(parseInt(pageParam));
+    } else {
+      setPage(1);
+    }
     
-    // Récupérer le paramètre de catégorie de l'URL si présent
-    const categoryParam = searchParams.get("category");
-    if (categoryParam) {
-      filterProducts({
-        category: categoryParam,
-        minPrice: 0,
-        maxPrice: 1000000,
-        inStock: null,
-        brand: null
-      });
-    }
-  }, [searchParams, products]);
-
-  const filterProducts = (filters: FilterOptions) => {
-    let filtered = [...products];
-
-    // Filtre par catégorie
-    if (filters.category) {
-      filtered = filtered.filter((product) => product.category === filters.category);
-    }
-
-    // Filtre par prix
-    filtered = filtered.filter(
-      (product) => product.price >= filters.minPrice && product.price <= filters.maxPrice
-    );
-
-    // Filtre par disponibilité
-    if (filters.inStock !== null) {
-      filtered = filtered.filter((product) => product.inStock === filters.inStock);
-    }
-
-    // Filtre par marque
-    if (filters.brand) {
-      filtered = filtered.filter((product) => product.category.includes(filters.brand));
-    }
-
-    // Filtre par recherche
+    // Filter products based on search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((product) =>
+      setFilteredProducts(products.filter((product) =>
         product.name.toLowerCase().includes(query)
-      );
+      ));
+    } else {
+      setFilteredProducts(products);
     }
+  }, [searchParams, products, searchQuery]);
 
-    setFilteredProducts(filtered);
+  const filterProducts = (filters: FilterOptions) => {
+    // Update URL with category
+    if (filters.category) {
+      const categoryObj = categories.find(c => c.name === filters.category);
+      if (categoryObj) {
+        searchParams.set("category", categoryObj.id.toString());
+        searchParams.delete("page"); // Reset to page 1 when changing filters
+        setSearchParams(searchParams);
+      }
+    }
+    
+    // Apply search filter locally (other filters are applied via API)
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      setFilteredProducts(products.filter((product) =>
+        product.name.toLowerCase().includes(query)
+      ));
+    }
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    filterProducts({
-      category: null,
-      minPrice: 0,
-      maxPrice: 1000000,
-      inStock: null,
-      brand: null,
-    });
+    
+    // Apply search filter
+    if (query) {
+      const lowercaseQuery = query.toLowerCase();
+      setFilteredProducts(products.filter((product) =>
+        product.name.toLowerCase().includes(lowercaseQuery)
+      ));
+    } else {
+      setFilteredProducts(products);
+    }
+  };
+  
+  const handlePageChange = (newPage: number) => {
+    searchParams.set("page", newPage.toString());
+    setSearchParams(searchParams);
+    setPage(newPage);
+    window.scrollTo(0, 0);
   };
 
   if (isLoadingProducts || isLoadingCategories) {
@@ -143,11 +166,87 @@ const ProductsPage = () => {
                   </p>
                 </div>
               ) : (
-                <div className="product-grid">
-                  {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
+                <>
+                  <div className="product-grid">
+                    {filteredProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+                  
+                  {/* Pagination */}
+                  <div className="mt-8">
+                    <Pagination>
+                      <PaginationContent>
+                        {page > 1 && (
+                          <PaginationItem>
+                            <PaginationPrevious onClick={() => handlePageChange(page - 1)} />
+                          </PaginationItem>
+                        )}
+                        
+                        {/* First page */}
+                        {page > 2 && (
+                          <PaginationItem>
+                            <PaginationLink onClick={() => handlePageChange(1)}>
+                              1
+                            </PaginationLink>
+                          </PaginationItem>
+                        )}
+                        
+                        {/* Ellipsis for many pages */}
+                        {page > 3 && (
+                          <PaginationItem>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        )}
+                        
+                        {/* Previous page */}
+                        {page > 1 && (
+                          <PaginationItem>
+                            <PaginationLink onClick={() => handlePageChange(page - 1)}>
+                              {page - 1}
+                            </PaginationLink>
+                          </PaginationItem>
+                        )}
+                        
+                        {/* Current page */}
+                        <PaginationItem>
+                          <PaginationLink isActive>{page}</PaginationLink>
+                        </PaginationItem>
+                        
+                        {/* Next page */}
+                        {page < pagination.pages && (
+                          <PaginationItem>
+                            <PaginationLink onClick={() => handlePageChange(page + 1)}>
+                              {page + 1}
+                            </PaginationLink>
+                          </PaginationItem>
+                        )}
+                        
+                        {/* Ellipsis for many pages */}
+                        {page < pagination.pages - 2 && (
+                          <PaginationItem>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        )}
+                        
+                        {/* Last page */}
+                        {page < pagination.pages - 1 && (
+                          <PaginationItem>
+                            <PaginationLink onClick={() => handlePageChange(pagination.pages)}>
+                              {pagination.pages}
+                            </PaginationLink>
+                          </PaginationItem>
+                        )}
+                        
+                        {page < pagination.pages && (
+                          <PaginationItem>
+                            <PaginationNext onClick={() => handlePageChange(page + 1)} />
+                          </PaginationItem>
+                        )}
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                </>
               )}
             </div>
           </div>

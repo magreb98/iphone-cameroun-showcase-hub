@@ -6,6 +6,15 @@ import { getProducts } from "@/api/products";
 import { getCategories } from "@/api/categories";
 import { ProductFormData } from "@/api/products";
 import { Product } from "@/components/products/ProductCard";
+import { 
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
+} from "@/components/ui/pagination";
 
 // Import our newly created components
 import ProductSearchBar from "@/components/admin/products/ProductSearchBar";
@@ -19,11 +28,22 @@ const AdminProductsPage = () => {
   const [isPromotionDialogOpen, setIsPromotionDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductFormData | null>(null);
   const [promotionProduct, setPromotionProduct] = useState<Product | null>(null);
+  const [page, setPage] = useState(1);
+  const limit = 10; // Nombre de produits par page dans l'admin
 
-  const { data: products = [], isLoading: isLoadingProducts } = useQuery({
-    queryKey: ['products'],
-    queryFn: getProducts
+  const { data, isLoading: isLoadingProducts } = useQuery({
+    queryKey: ['products', page],
+    queryFn: () => getProducts(page, limit)
   });
+  
+  const products = data?.products || [];
+  const pagination = data?.pagination || {
+    total: 0,
+    page: 1,
+    limit,
+    pages: 1,
+    hasMore: false
+  };
 
   const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
     queryKey: ['categories'],
@@ -67,6 +87,10 @@ const AdminProductsPage = () => {
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
   };
+  
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
 
   if (isLoadingProducts || isLoadingCategories) {
     return (
@@ -92,6 +116,80 @@ const AdminProductsPage = () => {
           onEdit={handleOpenDialog}
           onPromotion={handleOpenPromotionDialog}
         />
+        
+        {/* Pagination */}
+        <div className="mt-4">
+          <Pagination>
+            <PaginationContent>
+              {page > 1 && (
+                <PaginationItem>
+                  <PaginationPrevious onClick={() => handlePageChange(page - 1)} />
+                </PaginationItem>
+              )}
+              
+              {/* First page */}
+              {page > 2 && (
+                <PaginationItem>
+                  <PaginationLink onClick={() => handlePageChange(1)}>
+                    1
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+              
+              {/* Ellipsis for many pages */}
+              {page > 3 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+              
+              {/* Previous page */}
+              {page > 1 && (
+                <PaginationItem>
+                  <PaginationLink onClick={() => handlePageChange(page - 1)}>
+                    {page - 1}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+              
+              {/* Current page */}
+              <PaginationItem>
+                <PaginationLink isActive>{page}</PaginationLink>
+              </PaginationItem>
+              
+              {/* Next page */}
+              {page < pagination.pages && (
+                <PaginationItem>
+                  <PaginationLink onClick={() => handlePageChange(page + 1)}>
+                    {page + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+              
+              {/* Ellipsis for many pages */}
+              {page < pagination.pages - 2 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+              
+              {/* Last page */}
+              {page < pagination.pages - 1 && (
+                <PaginationItem>
+                  <PaginationLink onClick={() => handlePageChange(pagination.pages)}>
+                    {pagination.pages}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+              
+              {page < pagination.pages && (
+                <PaginationItem>
+                  <PaginationNext onClick={() => handlePageChange(page + 1)} />
+                </PaginationItem>
+              )}
+            </PaginationContent>
+          </Pagination>
+        </div>
 
         <ProductFormDialog
           open={isDialogOpen}
