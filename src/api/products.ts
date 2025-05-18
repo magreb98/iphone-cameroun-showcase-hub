@@ -40,11 +40,11 @@ export interface PaginationData {
 }
 
 export interface ProductsResponse {
-  products: ProductResponseWithCategory[];
+  products: Product[];
   pagination: PaginationData;
 }
 
-export const getProducts = async (page = 1, limit = 12, categoryId?: number): Promise<{products: Product[], pagination: PaginationData}> => {
+export const getProducts = async (page = 1, limit = 12, categoryId?: number): Promise<ProductsResponse> => {
   const params = new URLSearchParams();
   params.append('page', page.toString());
   params.append('limit', limit.toString());

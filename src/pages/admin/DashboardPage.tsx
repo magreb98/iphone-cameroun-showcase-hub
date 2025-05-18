@@ -9,9 +9,9 @@ import { getProducts } from "@/api/products";
 import { getCategories } from "@/api/categories";
 
 const DashboardPage = () => {
-  const { data: products = [], isLoading: isLoadingProducts } = useQuery({
+  const { data: productsData, isLoading: isLoadingProducts } = useQuery({
     queryKey: ['products'],
-    queryFn: getProducts
+    queryFn: async () => getProducts(1, 10) // Define an async function that calls getProducts
   });
   
   const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
@@ -19,7 +19,10 @@ const DashboardPage = () => {
     queryFn: getCategories
   });
 
-  // Calcul des statistiques
+  // Extract the products array from the response
+  const products = productsData?.products || [];
+
+  // Calculate statistics
   const totalProducts = products.length;
   const productsInStock = products.filter(p => p.inStock).length;
   const totalCategories = categories.length;
