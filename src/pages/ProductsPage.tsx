@@ -22,7 +22,9 @@ import {
 const ProductsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(parseInt(searchParams.get("page") || "1"));
+  // Extract page number from URL once
+  const initialPage = parseInt(searchParams.get("page") || "1");
+  const [page, setPage] = useState(initialPage);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   
   // Get the category ID from URL if present
@@ -53,9 +55,8 @@ const ProductsPage = () => {
   const categoryNames = categories.map(c => c.name);
   const brands = ["Apple"]; // Hardcoded for now, could come from API
 
-  // Update page number when URL changes and filter products based on search
+  // Update page number when URL changes
   useEffect(() => {
-    // Update page number when URL changes
     const pageParam = searchParams.get("page");
     if (pageParam) {
       setPage(parseInt(pageParam));
@@ -64,9 +65,8 @@ const ProductsPage = () => {
     }
   }, [searchParams]);
   
-  // Separate useEffect for filtering products to avoid infinite loop
+  // Filter products based on search query
   useEffect(() => {
-    // Filter products based on search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       setFilteredProducts(products.filter((product) =>

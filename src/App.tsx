@@ -17,6 +17,7 @@ import LoginPage from "./pages/admin/LoginPage";
 import DashboardPage from "./pages/admin/DashboardPage";
 import AdminProductsPage from "./pages/admin/ProductsPage";
 import CategoriesPage from "./pages/admin/CategoriesPage";
+import ConfigurationsPage from "./pages/admin/ConfigurationsPage";
 
 // Page 404
 import NotFound from "./pages/NotFound";
@@ -42,6 +43,7 @@ const App = () => (
           <Route path="/admin/dashboard" element={<DashboardPage />} />
           <Route path="/admin/products" element={<AdminProductsPage />} />
           <Route path="/admin/categories" element={<CategoriesPage />} />
+          <Route path="/admin/configurations" element={<ConfigurationsPage />} />
           
           {/* Route par défaut (404) */}
           <Route path="*" element={<NotFound />} />

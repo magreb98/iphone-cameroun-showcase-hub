@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, 
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Home, Box, Tag, LogOut } from "lucide-react";
+import { Home, Box, Tag, LogOut, Settings } from "lucide-react";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -75,6 +75,15 @@ const AdminLayout = ({ children, title }: AdminLayoutProps) => {
                       <Link to="/admin/categories" className="flex items-center">
                         <Tag className="mr-2 h-4 w-4" />
                         <span>Catégories</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link to="/admin/configurations" className="flex items-center">
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Configurations</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
