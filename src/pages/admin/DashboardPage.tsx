@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Product } from "@/components/products/ProductCard";
-import { ShoppingBag, Package, Tag, Whatsapp } from "lucide-react";
+import { ShoppingBag, Package, Tag, WhatsApp } from "lucide-react";
 import { getProducts } from "@/api/products";
 import { getCategories } from "@/api/categories";
 import { getConfiguration, saveConfiguration } from "@/api/configurations";
@@ -31,13 +31,15 @@ const DashboardPage = () => {
   // Fetch WhatsApp configuration
   const { data: whatsappConfig } = useQuery({
     queryKey: ['config', 'whatsapp_number'],
-    queryFn: () => getConfiguration('whatsapp_number'),
-    onSuccess: (data) => {
-      if (data && data.configValue) {
-        setWhatsappNumber(data.configValue);
-      }
-    }
+    queryFn: () => getConfiguration('whatsapp_number')
   });
+
+  // Set WhatsApp number when config is loaded
+  useEffect(() => {
+    if (whatsappConfig && whatsappConfig.configValue) {
+      setWhatsappNumber(whatsappConfig.configValue);
+    }
+  }, [whatsappConfig]);
 
   // Save WhatsApp configuration mutation
   const saveWhatsappMutation = useMutation({

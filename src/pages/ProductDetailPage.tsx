@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -24,17 +23,18 @@ const ProductDetailPage = () => {
   // Fetch WhatsApp number from configurations
   const { data: whatsappConfig } = useQuery({
     queryKey: ['config', 'whatsapp_number'],
-    queryFn: () => getConfiguration('whatsapp_number'),
-    onSuccess: (data) => {
-      if (data && data.configValue) {
-        setWhatsappNumber(data.configValue);
-      }
-    },
-    onError: () => {
+    queryFn: () => getConfiguration('whatsapp_number')
+  });
+  
+  // Set whatsapp number when configuration is loaded
+  useEffect(() => {
+    if (whatsappConfig && whatsappConfig.configValue) {
+      setWhatsappNumber(whatsappConfig.configValue);
+    } else {
       // Default WhatsApp number if configuration not found
       setWhatsappNumber("+237600000000");
     }
-  });
+  }, [whatsappConfig]);
   
   const isPromotionValid = 
     product?.isOnPromotion && 
