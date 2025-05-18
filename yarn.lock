@@ -2836,7 +2836,7 @@ loose-envify@^1.1.0, loose-envify@^1.4.0:
   dependencies:
     js-tokens "^3.0.0 || ^4.0.0"
 
-lovable-tagger@^1.1.7:
+lovable-tagger@^1.1.8:
   version "1.1.8"
   resolved "https://registry.yarnpkg.com/lovable-tagger/-/lovable-tagger-1.1.8.tgz#52dfe4130896e4e49306a97dad32ccd47edb7c01"
   integrity sha512-0a8lEpsgk+Z6crd+HE+GTmVzB0f++lMyTgW3QUF+hYZBjsA384RqUfCZAYccHlMLxYPI+dk7zjVuIvJcq8PiBg==
