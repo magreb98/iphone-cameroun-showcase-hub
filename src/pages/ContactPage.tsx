@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
-import { MessageCircle, Phone, WhatsApp } from "lucide-react";
+import { MessageCircle, Phone } from "lucide-react";
 import { getConfiguration } from "@/api/configurations";
 
 const ContactPage = () => {
@@ -163,7 +163,7 @@ const ContactPage = () => {
                   <h3 className="font-medium text-lg text-apple-dark">Email</h3>
                   <div className="ml-auto flex">
                     <a href="mailto:contact@iphonecameroun.com" className="text-apple-blue hover:underline inline-flex items-center">
-                      <MessageSquare className="h-4 w-4 mr-1" />
+                      <MessageCircle className="h-4 w-4 mr-1" />
                       <span>Envoyer un email</span>
                     </a>
                   </div>
@@ -178,7 +178,7 @@ const ContactPage = () => {
                       <span>Appeler</span>
                     </a>
                     <a href={`https://wa.me/${whatsappNumber?.replace(/\+/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline inline-flex items-center">
-                      <WhatsApp className="h-4 w-4 mr-1" />
+                      <MessageCircle className="h-4 w-4 mr-1" />
                       <span>WhatsApp</span>
                     </a>
                   </div>
