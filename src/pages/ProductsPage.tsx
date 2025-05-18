@@ -49,10 +49,11 @@ const ProductsPage = () => {
     queryFn: getCategories
   });
 
-  // Liste des catégories et marques
+  // List of categories and brands
   const categoryNames = categories.map(c => c.name);
-  const brands = ["Apple"]; // Hardcoded pour l'instant, pourrait venir de l'API
+  const brands = ["Apple"]; // Hardcoded for now, could come from API
 
+  // Update page number when URL changes and filter products based on search
   useEffect(() => {
     // Update page number when URL changes
     const pageParam = searchParams.get("page");
@@ -61,7 +62,10 @@ const ProductsPage = () => {
     } else {
       setPage(1);
     }
-    
+  }, [searchParams]);
+  
+  // Separate useEffect for filtering products to avoid infinite loop
+  useEffect(() => {
     // Filter products based on search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -71,7 +75,7 @@ const ProductsPage = () => {
     } else {
       setFilteredProducts(products);
     }
-  }, [searchParams, products, searchQuery]);
+  }, [searchQuery, products]);
 
   const filterProducts = (filters: FilterOptions) => {
     // Update URL with category
@@ -83,29 +87,11 @@ const ProductsPage = () => {
         setSearchParams(searchParams);
       }
     }
-    
-    // Apply search filter locally (other filters are applied via API)
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      setFilteredProducts(products.filter((product) =>
-        product.name.toLowerCase().includes(query)
-      ));
-    }
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    
-    // Apply search filter
-    if (query) {
-      const lowercaseQuery = query.toLowerCase();
-      setFilteredProducts(products.filter((product) =>
-        product.name.toLowerCase().includes(lowercaseQuery)
-      ));
-    } else {
-      setFilteredProducts(products);
-    }
   };
   
   const handlePageChange = (newPage: number) => {
