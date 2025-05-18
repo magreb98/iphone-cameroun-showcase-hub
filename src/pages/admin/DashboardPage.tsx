@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Product } from "@/components/products/ProductCard";
-import { ShoppingBag, Package, Tag, WhatsApp } from "lucide-react";
+import { ShoppingBag, Package, Tag, MessageCircle } from "lucide-react"; // Changed from WhatsApp to MessageCircle
 import { getProducts } from "@/api/products";
 import { getCategories } from "@/api/categories";
 import { getConfiguration, saveConfiguration } from "@/api/configurations";
@@ -158,7 +158,7 @@ const DashboardPage = () => {
         <Card>
           <CardHeader className="flex flex-row items-center space-y-0 pb-2">
             <CardTitle className="text-lg font-medium">Configuration WhatsApp</CardTitle>
-            <Whatsapp className="h-5 w-5 text-green-600 ml-2" />
+            <MessageCircle className="h-5 w-5 text-green-600 ml-2" />
           </CardHeader>
           <CardContent className="pt-4">
             <div className="space-y-4">

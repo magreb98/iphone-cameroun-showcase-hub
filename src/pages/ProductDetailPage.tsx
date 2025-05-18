@@ -1,10 +1,11 @@
+
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tag, Whatsapp } from "lucide-react";
+import { Tag, MessageCircle } from "lucide-react"; // Changed from Whatsapp to MessageCircle
 import { toast } from "sonner";
 import { getProduct } from "@/api/products";
 import { getConfiguration } from "@/api/configurations";
@@ -202,7 +203,7 @@ const ProductDetailPage = () => {
                 disabled={!product.inStock}
                 onClick={handleContactClick}
               >
-                <Whatsapp className="h-5 w-5" />
+                <MessageCircle className="h-5 w-5" />
                 <span>{product.inStock ? "Contactez-nous" : "Indisponible"}</span>
               </Button>
               <Button
