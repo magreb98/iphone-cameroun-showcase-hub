@@ -13,12 +13,12 @@ CREATE TABLE IF NOT EXISTS Users (
   updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Table des catégories (avec imageUrl ajouté)
+-- Table des catégories
 CREATE TABLE IF NOT EXISTS Categories (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL UNIQUE,
   description TEXT,
-  imageUrl VARCHAR(255),
+  imageUrl VARCHAR(255) NULL,
   createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
   updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -40,18 +40,43 @@ CREATE TABLE IF NOT EXISTS Products (
   FOREIGN KEY (categoryId) REFERENCES Categories(id)
 );
 
+-- Nouvelle table pour les images de produits
+CREATE TABLE IF NOT EXISTS ProductImages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  productId INT NOT NULL,
+  imageUrl VARCHAR(255) NOT NULL,
+  isMainImage BOOLEAN DEFAULT false,
+  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (productId) REFERENCES Products(id) ON DELETE CASCADE
+);
+
+-- Table des configurations
+CREATE TABLE IF NOT EXISTS Configurations (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  configKey VARCHAR(255) NOT NULL UNIQUE,
+  configValue TEXT NOT NULL,
+  description TEXT NULL,
+  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 -- Insertion des données de test
 -- Utilisateur admin
 INSERT INTO Users (email, password, isAdmin) VALUES 
 ('admin@iphonecameroun.com', '$2a$10$XFGYTcKBxED/KY0KpU5Ke.n8XZ1QY5CeYIw.9rWtpQNVCiX2Yx.cO', true);
 -- Le mot de passe est 'admin123' hashé avec bcrypt
 
--- Catégories avec des images
-INSERT INTO Categories (name, description, imageUrl) VALUES 
-('iPhones', 'Smartphones Apple iPhone', 'https://placehold.co/600x400?text=iPhones'),
-('iPads', 'Tablettes Apple iPad', 'https://placehold.co/600x400?text=iPads'),
-('Macbooks', 'Ordinateurs portables Apple MacBook', 'https://placehold.co/600x400?text=Macbooks'),
-('Accessoires', 'Accessoires pour produits Apple', 'https://placehold.co/600x400?text=Accessoires');
+-- Catégories
+INSERT INTO Categories (name, description) VALUES 
+('iPhones', 'Smartphones Apple iPhone'),
+('iPads', 'Tablettes Apple iPad'),
+('Macbooks', 'Ordinateurs portables Apple MacBook'),
+('Accessoires', 'Accessoires pour produits Apple');
+
+-- Configuration WhatsApp
+INSERT INTO Configurations (configKey, configValue, description) VALUES
+('whatsapp_number', '+237600000000', 'Numéro WhatsApp pour les contacts clients');
 
 -- Produits
 INSERT INTO Products (name, price, imageUrl, categoryId, inStock, quantity) VALUES 
@@ -67,13 +92,10 @@ INSERT INTO Products (name, price, imageUrl, categoryId, inStock, quantity, isOn
 ('iPhone 13', 799000, 'https://placehold.co/600x400?text=iPhone+13', 1, true, 7, true, 699000, DATE_ADD(CURRENT_DATE(), INTERVAL 30 DAY)),
 ('AirPods 3', 159000, 'https://placehold.co/600x400?text=AirPods+3', 4, true, 12, true, 129000, DATE_ADD(CURRENT_DATE(), INTERVAL 15 DAY));
 
--- Ajoutez plus de produits pour tester la pagination
-INSERT INTO Products (name, price, imageUrl, categoryId, inStock, quantity) VALUES 
-('iPhone 12', 699000, 'https://placehold.co/600x400?text=iPhone+12', 1, true, 8),
-('iPhone 11', 599000, 'https://placehold.co/600x400?text=iPhone+11', 1, true, 6),
-('iPad Pro 11"', 899000, 'https://placehold.co/600x400?text=iPad+Pro+11', 2, true, 4),
-('iPad Mini', 599000, 'https://placehold.co/600x400?text=iPad+Mini', 2, true, 7),
-('MacBook Air M2', 1299000, 'https://placehold.co/600x400?text=MacBook+Air', 3, true, 5),
-('Mac Mini', 899000, 'https://placehold.co/600x400?text=Mac+Mini', 3, true, 3),
-('Apple Watch Series 8', 499000, 'https://placehold.co/600x400?text=Apple+Watch', 4, true, 10),
-('AirTag', 39000, 'https://placehold.co/600x400?text=AirTag', 4, true, 25);
+-- Images supplémentaires pour les produits
+INSERT INTO ProductImages (productId, imageUrl, isMainImage) VALUES 
+(1, 'https://placehold.co/600x400?text=iPhone+14+Pro', true),
+(1, 'https://placehold.co/600x400?text=iPhone+14+Pro+Side', false),
+(1, 'https://placehold.co/600x400?text=iPhone+14+Pro+Back', false),
+(2, 'https://placehold.co/600x400?text=iPhone+15', true),
+(2, 'https://placehold.co/600x400?text=iPhone+15+Side', false);

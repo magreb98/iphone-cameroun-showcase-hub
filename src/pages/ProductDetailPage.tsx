@@ -5,13 +5,15 @@ import { useQuery } from "@tanstack/react-query";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tag } from "lucide-react";
+import { Tag, MessageCircle } from "lucide-react"; // Changed from Whatsapp to MessageCircle
 import { toast } from "sonner";
 import { getProduct } from "@/api/products";
+import { getConfiguration } from "@/api/configurations";
 
 const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const [selectedImage, setSelectedImage] = useState(0);
+  const [whatsappNumber, setWhatsappNumber] = useState("");
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
@@ -19,12 +21,33 @@ const ProductDetailPage = () => {
     enabled: !!id
   });
   
+  // Fetch WhatsApp number from configurations
+  const { data: whatsappConfig } = useQuery({
+    queryKey: ['config', 'whatsapp_number'],
+    queryFn: () => getConfiguration('whatsapp_number')
+  });
+  
+  // Set whatsapp number when configuration is loaded
+  useEffect(() => {
+    if (whatsappConfig && whatsappConfig.configValue) {
+      setWhatsappNumber(whatsappConfig.configValue);
+    } else {
+      // Default WhatsApp number if configuration not found
+      setWhatsappNumber("+237600000000");
+    }
+  }, [whatsappConfig]);
+  
   const isPromotionValid = 
     product?.isOnPromotion && 
     product?.promotionPrice && 
     (!product?.promotionEndDate || new Date(product.promotionEndDate) > new Date());
   
   const displayPrice = isPromotionValid ? product?.promotionPrice : product?.price;
+  
+  // Get product images array or create from main image
+  const images = product?.images?.length ? 
+    product.images.map(img => img.url) : 
+    product?.imageUrl ? [product.imageUrl] : [];
   
   if (isLoading) {
     return (
@@ -50,16 +73,23 @@ const ProductDetailPage = () => {
       </MainLayout>
     );
   }
-  
-  // Images fictives supplémentaires pour la démo
-  const images = [
-    product.imageUrl,
-    "https://images.unsplash.com/photo-1565775177580-5e413706c7e5?auto=format&fit=crop&w=500",
-    "https://images.unsplash.com/photo-1512054502232-10a0a035d672?auto=format&fit=crop&w=500",
-  ];
 
   const handleContactClick = () => {
-    toast.success("Notre équipe vous contactera bientôt !");
+    if (whatsappNumber) {
+      // Format the WhatsApp message with product details
+      const message = encodeURIComponent(
+        `Je suis intéressé(e) par le produit suivant:\n\n` +
+        `*${product.name}*\n` +
+        `Prix: ${displayPrice?.toLocaleString()} FCFA\n` +
+        `Référence: #${product.id}\n\n` +
+        `Veuillez me contacter pour plus d'informations.`
+      );
+      
+      // Open WhatsApp with the pre-filled message
+      window.open(`https://wa.me/${whatsappNumber.replace(/\+/g, '')}?text=${message}`, '_blank');
+    } else {
+      toast.error("Numéro WhatsApp non configuré");
+    }
   };
 
   return (
@@ -70,7 +100,7 @@ const ProductDetailPage = () => {
           <div className="space-y-4">
             <div className="aspect-square overflow-hidden rounded-lg bg-gray-100 relative">
               <img
-                src={images[selectedImage]}
+                src={images[selectedImage] || product.imageUrl}
                 alt={product.name}
                 className="w-full h-full object-contain"
               />
@@ -84,23 +114,25 @@ const ProductDetailPage = () => {
               )}
             </div>
             
-            <div className="flex space-x-2 overflow-x-auto pb-2">
-              {images.map((img, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImage(index)}
-                  className={`relative flex-shrink-0 aspect-square w-20 overflow-hidden rounded-md border-2 ${
-                    selectedImage === index ? "border-apple-blue" : "border-gray-200"
-                  }`}
-                >
-                  <img
-                    src={img}
-                    alt={`${product.name} preview ${index + 1}`}
-                    className="object-cover w-full h-full"
-                  />
-                </button>
-              ))}
-            </div>
+            {images.length > 1 && (
+              <div className="flex space-x-2 overflow-x-auto pb-2">
+                {images.map((img, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`relative flex-shrink-0 aspect-square w-20 overflow-hidden rounded-md border-2 ${
+                      selectedImage === index ? "border-apple-blue" : "border-gray-200"
+                    }`}
+                  >
+                    <img
+                      src={img}
+                      alt={`${product.name} preview ${index + 1}`}
+                      className="object-cover w-full h-full"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           
           {/* Product Info */}
@@ -167,11 +199,12 @@ const ProductDetailPage = () => {
             
             <div className="flex space-x-4">
               <Button
-                className="w-full"
+                className="w-full flex items-center justify-center space-x-2"
                 disabled={!product.inStock}
                 onClick={handleContactClick}
               >
-                {product.inStock ? "Contactez-nous" : "Indisponible"}
+                <MessageCircle className="h-5 w-5" />
+                <span>{product.inStock ? "Contactez-nous" : "Indisponible"}</span>
               </Button>
               <Button
                 variant="outline"

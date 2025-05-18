@@ -9,8 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Image, Link } from "lucide-react";
-import { createProduct, updateProduct, ProductFormData } from "@/api/products";
+import { Image, Link, Upload, X } from "lucide-react";
+import { createProduct, updateProduct, uploadProductImages, ProductFormData } from "@/api/products";
 import { Product } from "@/components/products/ProductCard";
 
 interface Category {
@@ -36,7 +36,8 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
     imageUrl: ""
   });
   const [imageTab, setImageTab] = useState<"url" | "upload">("url");
-  const [localImage, setLocalImage] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
 
   useEffect(() => {
     if (editingProduct) {
@@ -52,12 +53,24 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
         imageUrl: ""
       });
     }
-    setLocalImage(null);
+    setSelectedFiles([]);
+    setPreviewImages([]);
   }, [editingProduct]);
 
   const createProductMutation = useMutation({
     mutationFn: createProduct,
-    onSuccess: () => {
+    onSuccess: async (product) => {
+      // Upload images if any are selected
+      if (selectedFiles.length > 0) {
+        try {
+          await uploadProductImages(product.id, selectedFiles);
+          toast.success("Images téléchargées avec succès");
+        } catch (error) {
+          toast.error("Erreur lors du téléchargement des images");
+          console.error(error);
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success("Produit ajouté avec succès");
       handleCloseDialog();
@@ -69,8 +82,17 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
   });
 
   const updateProductMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: ProductFormData }) => 
-      updateProduct(id, data),
+    mutationFn: async ({ id, data }: { id: number; data: ProductFormData }) => {
+      // First update the product
+      const updatedProduct = await updateProduct(id, data);
+      
+      // Then upload any new images if selected
+      if (selectedFiles.length > 0) {
+        await uploadProductImages(id, selectedFiles);
+      }
+      
+      return updatedProduct;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success("Produit mis à jour avec succès");
@@ -84,7 +106,8 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
 
   const handleCloseDialog = () => {
     onOpenChange(false);
-    setLocalImage(null);
+    setSelectedFiles([]);
+    setPreviewImages([]);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,42 +136,40 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      const file = files[0];
-      setLocalImage(file);
+      // Convert FileList to Array
+      const newFiles = Array.from(files);
+      setSelectedFiles(prev => [...prev, ...newFiles]);
       
-      // Create a URL for the image preview
-      const imageUrl = URL.createObjectURL(file);
-      setFormData({
-        ...formData,
-        imageUrl: imageUrl
-      });
+      // Create preview URLs for the images
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+      setPreviewImages(prev => [...prev, ...newPreviews]);
+      
+      // If this is the first image and no URL is set, use the first preview for main image
+      if (!formData.imageUrl && previewImages.length === 0 && newPreviews.length > 0) {
+        setFormData({
+          ...formData,
+          imageUrl: "Preview image will be uploaded"
+        });
+      }
     }
   };
 
-  const convertFileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
-      reader.readAsDataURL(file);
-    });
+  const removeImage = (index: number) => {
+    // Remove preview URL
+    URL.revokeObjectURL(previewImages[index]);
+    
+    // Update state
+    setPreviewImages(prev => prev.filter((_, i) => i !== index));
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // For upload tab, if we don't have a URL but have files, set a placeholder URL
     let finalFormData = {...formData};
-    
-    // If we have a local image, convert it to base64
-    if (imageTab === "upload" && localImage) {
-      try {
-        const base64Image = await convertFileToBase64(localImage);
-        finalFormData.imageUrl = base64Image;
-      } catch (error) {
-        toast.error("Erreur lors de la conversion de l'image");
-        console.error(error);
-        return;
-      }
+    if (imageTab === "upload" && !formData.imageUrl && selectedFiles.length > 0) {
+      finalFormData.imageUrl = "https://placehold.co/600x400?text=Main+Image";
     }
     
     if (editingProduct && editingProduct.id) {
@@ -272,7 +293,7 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
                       URL
                     </TabsTrigger>
                     <TabsTrigger value="upload" className="flex items-center">
-                      <Image className="h-4 w-4 mr-2" />
+                      <Upload className="h-4 w-4 mr-2" />
                       Upload
                     </TabsTrigger>
                   </TabsList>
@@ -290,12 +311,39 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
                       id="imageUpload"
                       type="file"
                       accept="image/*"
+                      multiple
                       onChange={handleImageUpload}
                     />
+                    
+                    {previewImages.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {selectedFiles.length} image(s) sélectionnée(s)
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {previewImages.map((preview, index) => (
+                            <div key={index} className="relative w-16 h-16 border rounded overflow-hidden">
+                              <img 
+                                src={preview} 
+                                alt={`Preview ${index + 1}`} 
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeImage(index)}
+                                className="absolute top-0 right-0 bg-red-500 text-white p-0.5 rounded-bl"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </TabsContent>
                 </Tabs>
 
-                {formData.imageUrl && (
+                {imageTab === "url" && formData.imageUrl && (
                   <div className="mt-4">
                     <p className="text-sm text-muted-foreground mb-1">Aperçu:</p>
                     <img 

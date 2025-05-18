@@ -15,6 +15,15 @@ export interface ProductFormData {
   promotionEndDate?: string;
 }
 
+export interface ProductImage {
+  id: number;
+  productId: number;
+  imageUrl: string;
+  isMainImage: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ProductResponseWithCategory {
   id: number;
   name: string;
@@ -29,6 +38,7 @@ export interface ProductResponseWithCategory {
   Category: {
     name: string;
   };
+  ProductImages: ProductImage[];
 }
 
 export interface PaginationData {
@@ -66,7 +76,12 @@ export const getProducts = async (page = 1, limit = 12, categoryId?: number): Pr
     quantity: product.quantity,
     isOnPromotion: product.isOnPromotion,
     promotionPrice: product.promotionPrice,
-    promotionEndDate: product.promotionEndDate
+    promotionEndDate: product.promotionEndDate,
+    images: product.ProductImages ? product.ProductImages.map(img => ({
+      id: img.id,
+      url: img.imageUrl,
+      isMain: img.isMainImage
+    })) : []
   }));
   
   return {
@@ -89,7 +104,12 @@ export const getProduct = async (id: number): Promise<Product> => {
     quantity: response.data.quantity,
     isOnPromotion: response.data.isOnPromotion,
     promotionPrice: response.data.promotionPrice,
-    promotionEndDate: response.data.promotionEndDate
+    promotionEndDate: response.data.promotionEndDate,
+    images: response.data.ProductImages ? response.data.ProductImages.map(img => ({
+      id: img.id,
+      url: img.imageUrl,
+      isMain: img.isMainImage
+    })) : []
   };
   
   return product;
@@ -102,6 +122,32 @@ export const createProduct = async (productData: ProductFormData): Promise<Produ
 
 export const updateProduct = async (id: number, productData: ProductFormData): Promise<ProductResponseWithCategory> => {
   const response = await api.put(`/products/${id}`, productData);
+  return response.data;
+};
+
+export const uploadProductImages = async (id: number, images: File[]): Promise<{images: ProductImage[]}> => {
+  const formData = new FormData();
+  
+  for (const image of images) {
+    formData.append('images', image);
+  }
+  
+  const response = await api.post(`/products/${id}/images`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  
+  return response.data;
+};
+
+export const setMainImage = async (productId: number, imageId: number): Promise<{message: string, image: ProductImage}> => {
+  const response = await api.patch(`/products/${productId}/images/${imageId}/main`);
+  return response.data;
+};
+
+export const deleteProductImage = async (productId: number, imageId: number): Promise<{message: string}> => {
+  const response = await api.delete(`/products/${productId}/images/${imageId}`);
   return response.data;
 };
 
