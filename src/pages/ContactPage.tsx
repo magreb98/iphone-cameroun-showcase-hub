@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
-import { MessageSquare, Phone, WhatsApp } from "lucide-react";
+import { MessageCircle, Phone, WhatsApp } from "lucide-react";
 import { getConfiguration } from "@/api/configurations";
 
 const ContactPage = () => {
@@ -140,7 +140,7 @@ const ContactPage = () => {
                 className="w-full flex items-center justify-center space-x-2"
                 disabled={isSubmitting}
               >
-                <WhatsApp className="h-5 w-5" />
+                <MessageCircle className="h-5 w-5" />
                 <span>{isSubmitting ? "Envoi en cours..." : "Envoyer via WhatsApp"}</span>
               </Button>
             </form>
