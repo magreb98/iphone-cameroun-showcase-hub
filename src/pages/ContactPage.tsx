@@ -1,11 +1,14 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import MainLayout from "@/components/layout/MainLayout";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
+import { Whatsapp, Phone, Message } from "lucide-react";
+import { getConfiguration } from "@/api/configurations";
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -15,6 +18,21 @@ const ContactPage = () => {
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+
+  const { data: whatsappConfig } = useQuery({
+    queryKey: ['config', 'whatsapp_number'],
+    queryFn: () => getConfiguration('whatsapp_number'),
+    onSuccess: (data) => {
+      if (data && data.configValue) {
+        setWhatsappNumber(data.configValue);
+      }
+    },
+    onError: () => {
+      // Default WhatsApp number if configuration not found
+      setWhatsappNumber("+237600000000");
+    }
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -28,17 +46,33 @@ const ContactPage = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulation d'envoi de formulaire
-    setTimeout(() => {
-      toast.success("Votre message a été envoyé ! Nous vous contacterons bientôt.");
+    if (whatsappNumber) {
+      // Format the message for WhatsApp
+      const message = encodeURIComponent(
+        `*Nouveau message de contact*\n\n` +
+        `*Nom*: ${formData.name}\n` +
+        `*Email*: ${formData.email}\n` +
+        `*Téléphone*: ${formData.phone}\n\n` +
+        `*Message*:\n${formData.message}`
+      );
+      
+      // Open WhatsApp with the pre-filled message
+      window.open(`https://wa.me/${whatsappNumber.replace(/\+/g, '')}?text=${message}`, '_blank');
+      
+      toast.success("Message envoyé via WhatsApp !");
+      
+      // Reset form
       setFormData({
         name: "",
         email: "",
         phone: "",
         message: "",
       });
-      setIsSubmitting(false);
-    }, 1500);
+    } else {
+      toast.error("Numéro WhatsApp non configuré");
+    }
+    
+    setIsSubmitting(false);
   };
 
   return (
@@ -103,10 +137,11 @@ const ContactPage = () => {
               
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full flex items-center justify-center space-x-2"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Envoi en cours..." : "Envoyer le message"}
+                <Whatsapp className="h-5 w-5" />
+                <span>{isSubmitting ? "Envoi en cours..." : "Envoyer via WhatsApp"}</span>
               </Button>
             </form>
           </div>
@@ -124,21 +159,31 @@ const ContactPage = () => {
                   </p>
                 </div>
                 
-                <div>
+                <div className="flex items-center space-x-3">
                   <h3 className="font-medium text-lg text-apple-dark">Email</h3>
-                  <p className="text-gray-600">
-                    contact@iphonecameroun.com<br />
-                    support@iphonecameroun.com
-                  </p>
+                  <div className="ml-auto flex">
+                    <a href="mailto:contact@iphonecameroun.com" className="text-apple-blue hover:underline inline-flex items-center">
+                      <Message className="h-4 w-4 mr-1" />
+                      <span>Envoyer un email</span>
+                    </a>
+                  </div>
                 </div>
+                <p className="text-gray-600">contact@iphonecameroun.com</p>
                 
-                <div>
+                <div className="flex items-center space-x-3">
                   <h3 className="font-medium text-lg text-apple-dark">Téléphone</h3>
-                  <p className="text-gray-600">
-                    +237 6XX XXX XXX<br />
-                    +237 6XX XXX XXX
-                  </p>
+                  <div className="ml-auto flex space-x-3">
+                    <a href={`tel:${whatsappNumber}`} className="text-apple-blue hover:underline inline-flex items-center">
+                      <Phone className="h-4 w-4 mr-1" />
+                      <span>Appeler</span>
+                    </a>
+                    <a href={`https://wa.me/${whatsappNumber?.replace(/\+/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline inline-flex items-center">
+                      <Whatsapp className="h-4 w-4 mr-1" />
+                      <span>WhatsApp</span>
+                    </a>
+                  </div>
                 </div>
+                <p className="text-gray-600">{whatsappNumber || "+237 6XX XXX XXX"}</p>
                 
                 <div>
                   <h3 className="font-medium text-lg text-apple-dark">Heures d'ouverture</h3>

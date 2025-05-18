@@ -1,22 +1,59 @@
 
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Product } from "@/components/products/ProductCard";
-import { ShoppingBag, Package, Tag, Search } from "lucide-react";
+import { ShoppingBag, Package, Tag, Whatsapp } from "lucide-react";
 import { getProducts } from "@/api/products";
 import { getCategories } from "@/api/categories";
+import { getConfiguration, saveConfiguration } from "@/api/configurations";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 const DashboardPage = () => {
-  const { data: productsData, isLoading: isLoadingProducts } = useQuery({
-    queryKey: ['products'],
-    queryFn: async () => getProducts(1, 10) // Define an async function that calls getProducts
+  const queryClient = useQueryClient();
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const { data: productsData } = useQuery({
+    queryKey: ['products', 1],
+    queryFn: () => getProducts(1, 10)
   });
   
-  const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
+  const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: getCategories
+  });
+
+  // Fetch WhatsApp configuration
+  const { data: whatsappConfig } = useQuery({
+    queryKey: ['config', 'whatsapp_number'],
+    queryFn: () => getConfiguration('whatsapp_number'),
+    onSuccess: (data) => {
+      if (data && data.configValue) {
+        setWhatsappNumber(data.configValue);
+      }
+    }
+  });
+
+  // Save WhatsApp configuration mutation
+  const saveWhatsappMutation = useMutation({
+    mutationFn: (configValue: string) => saveConfiguration({
+      configKey: 'whatsapp_number',
+      configValue,
+      description: 'Numéro WhatsApp pour les contacts clients'
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['config'] });
+      toast.success("Numéro WhatsApp mis à jour avec succès");
+    },
+    onError: (error) => {
+      toast.error("Erreur lors de la mise à jour du numéro WhatsApp");
+      console.error(error);
+    }
   });
 
   // Extract the products array from the response
@@ -27,17 +64,23 @@ const DashboardPage = () => {
   const productsInStock = products.filter(p => p.inStock).length;
   const totalCategories = categories.length;
   const averagePrice = products.length ? 
-    products.reduce((sum, p) => sum + p.price, 0) / totalProducts : 0;
+    Math.round(products.reduce((sum, p) => sum + p.price, 0) / totalProducts) : 0;
 
-  if (isLoadingProducts || isLoadingCategories) {
-    return (
-      <AdminLayout title="Tableau de Bord">
-        <div className="flex justify-center items-center h-64">
-          <p>Chargement des données...</p>
-        </div>
-      </AdminLayout>
-    );
-  }
+  const handleWhatsappNumberSave = async () => {
+    setLoading(true);
+    try {
+      // Remove any spaces and make sure it starts with +
+      const formattedNumber = whatsappNumber.trim().replace(/\s+/g, '');
+      const finalNumber = formattedNumber.startsWith('+') ? formattedNumber : `+${formattedNumber}`;
+      
+      await saveWhatsappMutation.mutateAsync(finalNumber);
+      setWhatsappNumber(finalNumber);
+    } catch (error) {
+      console.error("Error saving WhatsApp number:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <AdminLayout title="Tableau de Bord">
@@ -96,7 +139,7 @@ const DashboardPage = () => {
               <CardTitle className="text-sm font-medium">
                 Prix Moyen
               </CardTitle>
-              <Search className="h-4 w-4 text-muted-foreground" />
+              <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -108,6 +151,44 @@ const DashboardPage = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* WhatsApp Configuration */}
+        <Card>
+          <CardHeader className="flex flex-row items-center space-y-0 pb-2">
+            <CardTitle className="text-lg font-medium">Configuration WhatsApp</CardTitle>
+            <Whatsapp className="h-5 w-5 text-green-600 ml-2" />
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Ce numéro sera utilisé pour recevoir des messages des clients via WhatsApp.
+                Assurez-vous que le numéro est valide et a un compte WhatsApp actif.
+              </p>
+              
+              <div className="flex items-end gap-3">
+                <div className="flex-grow space-y-1">
+                  <Label htmlFor="whatsappNumber">Numéro WhatsApp</Label>
+                  <Input
+                    id="whatsappNumber"
+                    value={whatsappNumber}
+                    onChange={(e) => setWhatsappNumber(e.target.value)}
+                    placeholder="+237 6XX XXX XXX"
+                  />
+                </div>
+                <Button 
+                  onClick={handleWhatsappNumberSave}
+                  disabled={loading || !whatsappNumber}
+                >
+                  {loading ? "Sauvegarde..." : "Sauvegarder"}
+                </Button>
+              </div>
+              
+              <p className="text-xs text-gray-500">
+                Format: +237 6XXXXXXXX (avec l'indicatif du pays)
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Recent Products */}
         <div>
