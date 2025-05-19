@@ -23,7 +23,12 @@ router.get('/:key', async (req, res) => {
     });
     
     if (!configuration) {
-      return res.status(404).json({ message: 'Configuration not found' });
+      // Renvoyer un objet vide mais pas d'erreur 404, laissez le client gérer les valeurs par défaut
+      return res.json({ 
+        configKey: req.params.key,
+        configValue: "",
+        description: "Configuration not found" 
+      });
     }
     
     res.json(configuration);

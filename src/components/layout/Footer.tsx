@@ -1,8 +1,36 @@
 
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { getConfiguration } from "@/api/configurations";
+import { Facebook, Instagram, Twitter, Phone } from "lucide-react";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+
+  const { data: whatsappConfig } = useQuery({
+    queryKey: ['config', 'whatsapp_number'],
+    queryFn: () => getConfiguration('whatsapp_number')
+  });
+
+  const { data: emailConfig } = useQuery({
+    queryKey: ['config', 'email_address'],
+    queryFn: () => getConfiguration('email_address')
+  });
+
+  const { data: instagramConfig } = useQuery({
+    queryKey: ['config', 'instagram_link'],
+    queryFn: () => getConfiguration('instagram_link')
+  });
+
+  const { data: facebookConfig } = useQuery({
+    queryKey: ['config', 'facebook_link'],
+    queryFn: () => getConfiguration('facebook_link')
+  });
+  
+  const phoneNumber = whatsappConfig?.configValue || "+237 6XX XXX XXX";
+  const email = emailConfig?.configValue || "contact@iphonecameroun.com";
+  const instagramLink = instagramConfig?.configValue || "#";
+  const facebookLink = facebookConfig?.configValue || "#";
 
   return (
     <footer className="bg-apple-dark text-white pt-12 pb-6">
@@ -48,22 +76,21 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Contact</h3>
             <p className="text-gray-300">Yaoundé, Cameroun</p>
-            <p className="text-gray-300">Email: contact@iphonecameroun.com</p>
-            <p className="text-gray-300">Tél: +237 6XX XXX XXX</p>
+            <p className="text-gray-300">Email: {email}</p>
+            <p className="text-gray-300">Tél: {phoneNumber}</p>
           </div>
 
           {/* Social Links */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Suivez-nous</h3>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">
+              <a href={facebookLink} target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white transition-colors flex items-center">
+                <Facebook className="h-4 w-4 mr-1" />
                 Facebook
               </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">
+              <a href={instagramLink} target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white transition-colors flex items-center">
+                <Instagram className="h-4 w-4 mr-1" />
                 Instagram
-              </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">
-                Twitter
               </a>
             </div>
           </div>

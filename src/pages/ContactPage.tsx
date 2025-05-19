@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import MainLayout from "@/components/layout/MainLayout";
@@ -6,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
-import { MessageCircle, Phone } from "lucide-react";
+import { MessageCircle, Phone, Facebook, Instagram } from "lucide-react";
 import { getConfiguration } from "@/api/configurations";
 
 const ContactPage = () => {
@@ -18,21 +19,68 @@ const ContactPage = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [storeAddress, setStoreAddress] = useState("");
+  const [emailAddress, setEmailAddress] = useState("");
+  const [facebookLink, setFacebookLink] = useState("");
+  const [instagramLink, setInstagramLink] = useState("");
 
   const { data: whatsappConfig } = useQuery({
     queryKey: ['config', 'whatsapp_number'],
     queryFn: () => getConfiguration('whatsapp_number'),
   });
 
-  // Set whatsapp number when configuration is loaded
+  const { data: addressConfig } = useQuery({
+    queryKey: ['config', 'store_address'],
+    queryFn: () => getConfiguration('store_address'),
+  });
+
+  const { data: emailConfig } = useQuery({
+    queryKey: ['config', 'email_address'],
+    queryFn: () => getConfiguration('email_address'),
+  });
+
+  const { data: facebookConfig } = useQuery({
+    queryKey: ['config', 'facebook_link'],
+    queryFn: () => getConfiguration('facebook_link'),
+  });
+
+  const { data: instagramConfig } = useQuery({
+    queryKey: ['config', 'instagram_link'],
+    queryFn: () => getConfiguration('instagram_link'),
+  });
+
+  // Set values when configuration is loaded
   useEffect(() => {
     if (whatsappConfig && whatsappConfig.configValue) {
       setWhatsappNumber(whatsappConfig.configValue);
     } else {
-      // Default WhatsApp number if configuration not found
-      setWhatsappNumber("+237600000000");
+      setWhatsappNumber("+237 6XX XXX XXX");
     }
-  }, [whatsappConfig]);
+    
+    if (addressConfig && addressConfig.configValue) {
+      setStoreAddress(addressConfig.configValue);
+    } else {
+      setStoreAddress("Rue 1.234, Quartier X\nYaoundé, Cameroun");
+    }
+    
+    if (emailConfig && emailConfig.configValue) {
+      setEmailAddress(emailConfig.configValue);
+    } else {
+      setEmailAddress("contact@iphonecameroun.com");
+    }
+    
+    if (facebookConfig && facebookConfig.configValue) {
+      setFacebookLink(facebookConfig.configValue);
+    } else {
+      setFacebookLink("#");
+    }
+    
+    if (instagramConfig && instagramConfig.configValue) {
+      setInstagramLink(instagramConfig.configValue);
+    } else {
+      setInstagramLink("#");
+    }
+  }, [whatsappConfig, addressConfig, emailConfig, facebookConfig, instagramConfig]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -154,21 +202,25 @@ const ContactPage = () => {
                 <div>
                   <h3 className="font-medium text-lg text-apple-dark">Adresse</h3>
                   <p className="text-gray-600">
-                    Rue 1.234, Quartier X<br />
-                    Yaoundé, Cameroun
+                    {storeAddress.split('\n').map((line, i) => (
+                      <span key={i}>
+                        {line}
+                        {i < storeAddress.split('\n').length - 1 && <br />}
+                      </span>
+                    ))}
                   </p>
                 </div>
                 
                 <div className="flex items-center space-x-3">
                   <h3 className="font-medium text-lg text-apple-dark">Email</h3>
                   <div className="ml-auto flex">
-                    <a href="mailto:contact@iphonecameroun.com" className="text-apple-blue hover:underline inline-flex items-center">
+                    <a href={`mailto:${emailAddress}`} className="text-apple-blue hover:underline inline-flex items-center">
                       <MessageCircle className="h-4 w-4 mr-1" />
                       <span>Envoyer un email</span>
                     </a>
                   </div>
                 </div>
-                <p className="text-gray-600">contact@iphonecameroun.com</p>
+                <p className="text-gray-600">{emailAddress}</p>
                 
                 <div className="flex items-center space-x-3">
                   <h3 className="font-medium text-lg text-apple-dark">Téléphone</h3>
@@ -183,7 +235,7 @@ const ContactPage = () => {
                     </a>
                   </div>
                 </div>
-                <p className="text-gray-600">{whatsappNumber || "+237 6XX XXX XXX"}</p>
+                <p className="text-gray-600">{whatsappNumber}</p>
                 
                 <div>
                   <h3 className="font-medium text-lg text-apple-dark">Heures d'ouverture</h3>
@@ -207,14 +259,13 @@ const ContactPage = () => {
             <div>
               <h3 className="font-medium text-lg text-apple-dark mb-3">Suivez-nous</h3>
               <div className="flex space-x-4">
-                <a href="#" className="text-apple-blue hover:text-blue-700">
+                <a href={facebookLink} target="_blank" rel="noopener noreferrer" className="text-apple-blue hover:text-blue-700 flex items-center">
+                  <Facebook className="h-4 w-4 mr-1" />
                   Facebook
                 </a>
-                <a href="#" className="text-apple-blue hover:text-blue-700">
+                <a href={instagramLink} target="_blank" rel="noopener noreferrer" className="text-apple-blue hover:text-blue-700 flex items-center">
+                  <Instagram className="h-4 w-4 mr-1" />
                   Instagram
-                </a>
-                <a href="#" className="text-apple-blue hover:text-blue-700">
-                  Twitter
                 </a>
               </div>
             </div>

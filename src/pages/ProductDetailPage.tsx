@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tag, MessageCircle } from "lucide-react"; // Changed from Whatsapp to MessageCircle
+import { Tag, MessageCircle } from "lucide-react"; 
 import { toast } from "sonner";
 import { getProduct } from "@/api/products";
 import { getConfiguration } from "@/api/configurations";
