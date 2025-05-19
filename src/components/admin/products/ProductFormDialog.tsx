@@ -9,8 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Image, Link, Upload, X } from "lucide-react";
-import { createProduct, updateProduct, uploadProductImages, ProductFormData } from "@/api/products";
+import { Image as ImageIcon, Link, Upload, X, Trash, Star } from "lucide-react";
+import { createProduct, updateProduct, uploadProductImages, deleteProductImage, setMainImage, ProductFormData } from "@/api/products";
 import { Product } from "@/components/products/ProductCard";
 
 interface Category {
@@ -38,11 +38,20 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
   const [imageTab, setImageTab] = useState<"url" | "upload">("url");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<{id: number, url: string, isMain: boolean}[]>([]);
 
   useEffect(() => {
     if (editingProduct) {
       setFormData(editingProduct);
       setImageTab("url"); // Default to URL tab when editing
+
+      // Get the existing images from the product
+      if (editingProduct.id) {
+        const product = queryClient.getQueryData<Product>(["product", editingProduct.id]);
+        if (product?.images?.length) {
+          setExistingImages(product.images);
+        }
+      }
     } else {
       setFormData({
         name: "",
@@ -52,10 +61,11 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
         quantity: 0,
         imageUrl: ""
       });
+      setExistingImages([]);
     }
     setSelectedFiles([]);
     setPreviewImages([]);
-  }, [editingProduct]);
+  }, [editingProduct, queryClient]);
 
   const createProductMutation = useMutation({
     mutationFn: createProduct,
@@ -101,6 +111,42 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
     onError: (error) => {
       toast.error("Erreur lors de la mise à jour du produit");
       console.error(error);
+    }
+  });
+
+  // Mutation pour supprimer une image
+  const deleteImageMutation = useMutation({
+    mutationFn: ({ productId, imageId }: { productId: number, imageId: number }) => {
+      return deleteProductImage(productId, imageId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success("Image supprimée avec succès");
+    },
+    onError: () => {
+      toast.error("Erreur lors de la suppression de l'image");
+    }
+  });
+
+  // Mutation pour définir une image comme principale
+  const setMainImageMutation = useMutation({
+    mutationFn: ({ productId, imageId }: { productId: number, imageId: number }) => {
+      return setMainImage(productId, imageId);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success("Image principale définie avec succès");
+      
+      // Update existing images locally
+      setExistingImages(prev => 
+        prev.map(img => ({
+          ...img,
+          isMain: img.id === data.image.id
+        }))
+      );
+    },
+    onError: () => {
+      toast.error("Erreur lors de la définition de l'image principale");
     }
   });
 
@@ -161,6 +207,27 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
     // Update state
     setPreviewImages(prev => prev.filter((_, i) => i !== index));
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDeleteExistingImage = (imageId: number) => {
+    if (!editingProduct?.id) return;
+    
+    deleteImageMutation.mutate({ 
+      productId: editingProduct.id, 
+      imageId 
+    });
+    
+    // Also remove from local state
+    setExistingImages(prev => prev.filter(img => img.id !== imageId));
+  };
+
+  const handleSetMainImage = (imageId: number) => {
+    if (!editingProduct?.id) return;
+    
+    setMainImageMutation.mutate({
+      productId: editingProduct.id,
+      imageId
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -355,13 +422,69 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
                 )}
               </div>
             </div>
+
+            {/* Gestion des images existantes */}
+            {editingProduct && editingProduct.id && existingImages.length > 0 && (
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label className="text-right pt-2">
+                  Images existantes
+                </Label>
+                <div className="col-span-3">
+                  <div className="flex flex-wrap gap-2">
+                    {existingImages.map((image) => (
+                      <div 
+                        key={image.id} 
+                        className={`relative w-24 h-24 border rounded overflow-hidden ${image.isMain ? 'border-blue-500 border-2' : ''}`}
+                      >
+                        <img 
+                          src={image.url} 
+                          alt={`Image ${image.id}`} 
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute top-0 right-0 flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteExistingImage(image.id)}
+                            className="bg-red-500 text-white p-1 rounded-bl"
+                            title="Supprimer l'image"
+                          >
+                            <Trash className="h-3 w-3" />
+                          </button>
+                          {!image.isMain && (
+                            <button
+                              type="button"
+                              onClick={() => handleSetMainImage(image.id)}
+                              className="bg-yellow-500 text-white p-1 rounded-bl"
+                              title="Définir comme image principale"
+                            >
+                              <Star className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                        {image.isMain && (
+                          <div className="absolute bottom-0 left-0 right-0 bg-blue-500 text-white text-xs py-1 px-2 text-center">
+                            Image principale
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleCloseDialog}>
               Annuler
             </Button>
-            <Button type="submit" disabled={createProductMutation.isPending || updateProductMutation.isPending}>
+            <Button 
+              type="submit" 
+              disabled={createProductMutation.isPending || 
+                       updateProductMutation.isPending || 
+                       deleteImageMutation.isPending ||
+                       setMainImageMutation.isPending}
+            >
               {createProductMutation.isPending || updateProductMutation.isPending ? "Traitement..." : (editingProduct ? "Mettre à jour" : "Ajouter")}
             </Button>
           </DialogFooter>
@@ -372,3 +495,4 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
 };
 
 export default ProductFormDialog;
+
