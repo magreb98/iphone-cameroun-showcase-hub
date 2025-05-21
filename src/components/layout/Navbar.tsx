@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ShoppingBag } from "lucide-react";
+import { Menu, X, ShoppingBag, Building } from "lucide-react";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -25,6 +25,10 @@ const Navbar = () => {
             </Link>
             <Link to="/products" className="text-gray-700 hover:text-apple-blue transition-colors">
               Produits
+            </Link>
+            <Link to="/locations" className="text-gray-700 hover:text-apple-blue transition-colors flex items-center gap-1">
+              <Building size={18} />
+              <span>Nos Magasins</span>
             </Link>
             <Link to="/about" className="text-gray-700 hover:text-apple-blue transition-colors">
               À propos
@@ -65,6 +69,14 @@ const Navbar = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Produits
+              </Link>
+              <Link 
+                to="/locations" 
+                className="text-gray-700 hover:text-apple-blue transition-colors px-2 py-1 flex items-center gap-1"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Building size={18} />
+                <span>Nos Magasins</span>
               </Link>
               <Link 
                 to="/about" 

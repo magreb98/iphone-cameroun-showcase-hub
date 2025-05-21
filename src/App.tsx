@@ -11,13 +11,14 @@ import ProductsPage from "./pages/ProductsPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
+import LocationsPage from "./pages/LocationsPage";
 
 // Pages admin
 import LoginPage from "./pages/admin/LoginPage";
 import DashboardPage from "./pages/admin/DashboardPage";
 import AdminProductsPage from "./pages/admin/ProductsPage";
 import CategoriesPage from "./pages/admin/CategoriesPage";
-import LocationsPage from "./pages/admin/LocationsPage";
+import LocationsPage as AdminLocationsPage from "./pages/admin/LocationsPage";
 import UsersPage from "./pages/admin/UsersPage";
 import ConfigurationsPage from "./pages/admin/ConfigurationsPage";
 
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/" element={<HomePage />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
+          <Route path="/locations" element={<LocationsPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
           
@@ -45,7 +47,7 @@ const App = () => (
           <Route path="/admin/dashboard" element={<DashboardPage />} />
           <Route path="/admin/products" element={<AdminProductsPage />} />
           <Route path="/admin/categories" element={<CategoriesPage />} />
-          <Route path="/admin/locations" element={<LocationsPage />} />
+          <Route path="/admin/locations" element={<AdminLocationsPage />} />
           <Route path="/admin/users" element={<UsersPage />} />
           <Route path="/admin/configurations" element={<ConfigurationsPage />} />
           
