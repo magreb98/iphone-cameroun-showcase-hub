@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Image as ImageIcon, Link, Upload, X, Trash, Star } from "lucide-react";
 import { createProduct, updateProduct, uploadProductImages, deleteProductImage, setMainImage, ProductFormData } from "@/api/products";
-import { getLocations } from "@/api/locations";
+import { Location } from "@/api/locations";
 import { Product } from "@/components/products/ProductCard";
 
 interface Category {
@@ -23,9 +23,10 @@ interface ProductFormDialogProps {
   onOpenChange: (open: boolean) => void;
   editingProduct: ProductFormData | null;
   categories: Category[];
+  locations: Location[];
 }
 
-const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: ProductFormDialogProps) => {
+const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories, locations }: ProductFormDialogProps) => {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
@@ -42,10 +43,7 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
   const [existingImages, setExistingImages] = useState<{id: number, url: string, isMain: boolean}[]>([]);
 
   // Fetch locations for selection
-  const { data: locations = [] } = useQuery({
-    queryKey: ['locations'],
-    queryFn: getLocations
-  });
+  
   
   // Check if current user is a super admin (to show location selection)
   const currentUser = queryClient.getQueryData<any>(["currentUser"]);
