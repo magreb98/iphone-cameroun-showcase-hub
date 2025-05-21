@@ -19,10 +19,15 @@ router.post('/login', async (req, res) => {
     
     if (user && await user.matchPassword(password)) {
       res.json({
-        id: user.id,
-        email: user.email,
-        isAdmin: user.isAdmin,
-        token: generateToken(user.id)
+        token: generateToken(user.id),
+        user: {
+          id: user.id,
+          email: user.email,
+          isAdmin: user.isAdmin,
+          isSuperAdmin: user.isSuperAdmin,
+          locationId: user.locationId,
+          name: user.name
+        }
       });
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
@@ -32,10 +37,10 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Register a new admin (protected, only existing admins can create)
+// Register a new user (protected, only admins can create)
 router.post('/register', protect, admin, async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, isAdmin, isSuperAdmin, locationId, name } = req.body;
     
     const userExists = await User.findOne({ where: { email } });
     
@@ -46,7 +51,10 @@ router.post('/register', protect, admin, async (req, res) => {
     const user = await User.create({
       email,
       password,
-      isAdmin: true
+      isAdmin: isAdmin || false,
+      isSuperAdmin: isSuperAdmin || false,
+      locationId: locationId || null,
+      name: name || null
     });
     
     if (user) {
@@ -54,7 +62,9 @@ router.post('/register', protect, admin, async (req, res) => {
         id: user.id,
         email: user.email,
         isAdmin: user.isAdmin,
-        token: generateToken(user.id)
+        isSuperAdmin: user.isSuperAdmin,
+        locationId: user.locationId,
+        name: user.name
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
@@ -65,7 +75,7 @@ router.post('/register', protect, admin, async (req, res) => {
 });
 
 // Get user profile
-router.get('/profile', protect, async (req, res) => {
+router.get('/me', protect, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
       attributes: { exclude: ['password'] }
@@ -76,6 +86,68 @@ router.get('/profile', protect, async (req, res) => {
     } else {
       res.status(404).json({ message: 'User not found' });
     }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get all users (admin only)
+router.get('/users', protect, admin, async (req, res) => {
+  try {
+    const users = await User.findAll({
+      attributes: { exclude: ['password'] }
+    });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Update user (admin only)
+router.put('/users/:id', protect, admin, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    const { email, password, isAdmin, isSuperAdmin, locationId, name } = req.body;
+    
+    if (email) user.email = email;
+    if (password) user.password = password;
+    if (isAdmin !== undefined) user.isAdmin = isAdmin;
+    if (isSuperAdmin !== undefined) user.isSuperAdmin = isSuperAdmin;
+    if (locationId !== undefined) user.locationId = locationId;
+    if (name !== undefined) user.name = name;
+    
+    await user.save();
+    
+    res.json({
+      id: user.id,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      isSuperAdmin: user.isSuperAdmin,
+      locationId: user.locationId,
+      name: user.name
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Delete user (admin only)
+router.delete('/users/:id', protect, admin, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    await user.destroy();
+    
+    res.json({ message: 'User removed' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

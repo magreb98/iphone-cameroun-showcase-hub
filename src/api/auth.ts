@@ -12,6 +12,7 @@ export interface RegisterData {
   isAdmin?: boolean;
   isSuperAdmin?: boolean;
   locationId?: number | null;
+  name?: string | null;
 }
 
 export interface User {
@@ -31,7 +32,7 @@ export const login = async (credentials: LoginCredentials): Promise<User> => {
   // Store token in localStorage
   localStorage.setItem('token', token);
   
-  return user;
+  return { ...user, token };
 };
 
 export const logout = async (): Promise<void> => {
@@ -48,7 +49,7 @@ export const getAuthStatus = async (): Promise<User | null> => {
   }
 };
 
-// Nouvelles fonctions pour gérer les utilisateurs (admin)
+// User management functions (admin)
 export const getUsers = async (): Promise<User[]> => {
   const response = await api.get('/auth/users');
   return response.data;

@@ -75,7 +75,8 @@ const UsersPage = () => {
         password: '', // Le mot de passe ne doit pas être pré-rempli
         isAdmin: user.isAdmin,
         isSuperAdmin: user.isSuperAdmin,
-        locationId: user.locationId
+        locationId: user.locationId,
+        name: user.name
       });
     } else {
       setEditingUser({
@@ -83,7 +84,8 @@ const UsersPage = () => {
         password: '',
         isAdmin: true,
         isSuperAdmin: false,
-        locationId: null
+        locationId: null,
+        name: null
       });
     }
     setIsDialogOpen(true);
@@ -208,6 +210,17 @@ const UsersPage = () => {
                   value={editingUser?.password || ''} 
                   onChange={(e) => setEditingUser({...editingUser!, password: e.target.value})} 
                   required={!editingUser?.id} // Requis uniquement pour la création
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">Nom</Label>
+                <Input 
+                  id="name" 
+                  className="col-span-3"
+                  type="text" 
+                  value={editingUser?.name || ''} 
+                  onChange={(e) => setEditingUser({...editingUser!, name: e.target.value})} 
                 />
               </div>
               
