@@ -20,7 +20,7 @@ export interface LocationFormData {
   imageUrl: string;
   phone: string;
   email: string;
-  whatsappNumber?: string;
+  whatsappNumber: string | null;
 }
 
 export const getLocations = async (): Promise<Location[]> => {
