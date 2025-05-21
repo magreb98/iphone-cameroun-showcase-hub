@@ -4,23 +4,12 @@ import api from './index';
 export interface Location {
   id: number;
   name: string;
-  address?: string;
-  description?: string;
-  imageUrl?: string;
-  phone?: string;
-  email?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface LocationFormData {
-  id?: number;
-  name: string;
-  address?: string;
-  description?: string;
-  imageUrl?: string;
-  phone?: string;
-  email?: string;
+  address: string | null;
+  description: string | null;
+  imageUrl: string | null;
+  phone: string | null;
+  email: string | null;
+  whatsappNumber: string | null;
 }
 
 export const getLocations = async (): Promise<Location[]> => {
@@ -33,12 +22,12 @@ export const getLocation = async (id: number): Promise<Location> => {
   return response.data;
 };
 
-export const createLocation = async (locationData: LocationFormData): Promise<Location> => {
+export const createLocation = async (locationData: Omit<Location, 'id'>): Promise<Location> => {
   const response = await api.post('/locations', locationData);
   return response.data;
 };
 
-export const updateLocation = async (id: number, locationData: LocationFormData): Promise<Location> => {
+export const updateLocation = async (id: number, locationData: Partial<Omit<Location, 'id'>>): Promise<Location> => {
   const response = await api.put(`/locations/${id}`, locationData);
   return response.data;
 };
