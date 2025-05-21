@@ -234,7 +234,7 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
     e.preventDefault();
     
     // For upload tab, if we don't have a URL but have files, set a placeholder URL
-    let finalFormData = {...formData};
+    const finalFormData = {...formData};
     if (imageTab === "upload" && !formData.imageUrl && selectedFiles.length > 0) {
       finalFormData.imageUrl = "https://placehold.co/600x400?text=Main+Image";
     }
@@ -390,9 +390,9 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
                         <div className="flex flex-wrap gap-2">
                           {previewImages.map((preview, index) => (
                             <div key={index} className="relative w-16 h-16 border rounded overflow-hidden">
-                              <img 
-                                src={preview} 
-                                alt={`Preview ${index + 1}`} 
+                              <img
+                                src={preview}
+                                alt={`Preview ${index + 1}`}
                                 className="w-full h-full object-cover"
                               />
                               <button

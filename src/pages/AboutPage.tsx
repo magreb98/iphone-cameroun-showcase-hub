@@ -63,46 +63,46 @@ const AboutPage = () => {
           </section>
 
           {/* Our Team */}
-          <section className="space-y-8">
-            <h2 className="subsection-title">Notre Équipe</h2>
-            <p className="text-gray-600 leading-relaxed">
-              Notre équipe est composée de passionnés de technologie Apple, formés pour vous offrir
-              le meilleur service possible. Chaque membre apporte son expertise et son enthousiasme
-              pour vous aider à trouver les produits parfaits pour vos besoins.
-            </p>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {[
-                {
-                  name: "Thomas Kamga",
-                  role: "Fondateur & Directeur",
-                  image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=300"
-                },
-                {
-                  name: "Marie Ndom",
-                  role: "Responsable des Ventes",
-                  image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300"
-                },
-                {
-                  name: "Paul Mbarga",
-                  role: "Support Technique",
-                  image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=300"
-                }
-              ].map((member, index) => (
-                <div key={index} className="text-center">
-                  <div className="w-32 h-32 mx-auto rounded-full overflow-hidden mb-4">
-                    <img
-                      src={member.image}
-                      alt={member.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <h3 className="font-medium text-lg text-apple-dark">{member.name}</h3>
-                  <p className="text-apple-accent">{member.role}</p>
-                </div>
-              ))}
-            </div>
-          </section>
+          {/*<section className="space-y-8">*/}
+          {/*  <h2 className="subsection-title">Notre Équipe</h2>*/}
+          {/*  <p className="text-gray-600 leading-relaxed">*/}
+          {/*    Notre équipe est composée de passionnés de technologie Apple, formés pour vous offrir*/}
+          {/*    le meilleur service possible. Chaque membre apporte son expertise et son enthousiasme*/}
+          {/*    pour vous aider à trouver les produits parfaits pour vos besoins.*/}
+          {/*  </p>*/}
+          {/*  */}
+          {/*  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">*/}
+          {/*    {[*/}
+          {/*      {*/}
+          {/*        name: "Thomas Kamga",*/}
+          {/*        role: "Fondateur & Directeur",*/}
+          {/*        image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=300"*/}
+          {/*      },*/}
+          {/*      {*/}
+          {/*        name: "Marie Ndom",*/}
+          {/*        role: "Responsable des Ventes",*/}
+          {/*        image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300"*/}
+          {/*      },*/}
+          {/*      {*/}
+          {/*        name: "Paul Mbarga",*/}
+          {/*        role: "Support Technique",*/}
+          {/*        image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=300"*/}
+          {/*      }*/}
+          {/*    ].map((member, index) => (*/}
+          {/*      <div key={index} className="text-center">*/}
+          {/*        <div className="w-32 h-32 mx-auto rounded-full overflow-hidden mb-4">*/}
+          {/*          <img*/}
+          {/*            src={member.image}*/}
+          {/*            alt={member.name}*/}
+          {/*            className="w-full h-full object-cover"*/}
+          {/*          />*/}
+          {/*        </div>*/}
+          {/*        <h3 className="font-medium text-lg text-apple-dark">{member.name}</h3>*/}
+          {/*        <p className="text-apple-accent">{member.role}</p>*/}
+          {/*      </div>*/}
+          {/*    ))}*/}
+          {/*  </div>*/}
+          {/*</section>*/}
 
           {/* Vision & Mission */}
           <section className="space-y-4">

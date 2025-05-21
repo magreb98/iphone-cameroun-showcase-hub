@@ -365,13 +365,13 @@ const ConfigurationsPage = () => {
                         )}
                       />
                       
-                      <Button 
-                        type="submit" 
-                        className="mt-6"
-                        disabled={saveConfigMutation.isPending}
-                      >
-                        {saveConfigMutation.isPending ? "Enregistrement..." : "Enregistrer toutes les modifications"}
-                      </Button>
+                      {/*<Button */}
+                      {/*  type="submit" */}
+                      {/*  className="mt-6"*/}
+                      {/*  disabled={saveConfigMutation.isPending}*/}
+                      {/*>*/}
+                      {/*  {saveConfigMutation.isPending ? "Enregistrement..." : "Enregistrer toutes les modifications"}*/}
+                      {/*</Button>*/}
                     </form>
                   </Form>
                 )}

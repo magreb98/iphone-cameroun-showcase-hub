@@ -100,6 +100,9 @@ const Footer = () => {
           <p>
             &copy; {currentYear} iPhone Cameroun. Tous droits réservés.
           </p>
+          <p>
+           Powered by Corneille BAKOA
+          </p>
         </div>
       </div>
     </footer>
