@@ -23,7 +23,10 @@ const LocationsPage = () => {
   });
   
   const createMutation = useMutation({
-    mutationFn: (locationData: LocationFormData) => createLocation(locationData),
+    mutationFn: (locationData: LocationFormData) => createLocation({
+      ...locationData,
+      whatsappNumber: locationData.whatsappNumber || null,
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['locations'] });
       toast.success("Emplacement créé avec succès");
@@ -37,7 +40,10 @@ const LocationsPage = () => {
   
   const updateMutation = useMutation({
     mutationFn: ({ id, locationData }: { id: number, locationData: LocationFormData }) => 
-      updateLocation(id, locationData),
+      updateLocation(id, {
+        ...locationData,
+        whatsappNumber: locationData.whatsappNumber || null,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['locations'] });
       toast.success("Emplacement mis à jour avec succès");
@@ -70,7 +76,8 @@ const LocationsPage = () => {
         description: location.description || '',
         imageUrl: location.imageUrl || '',
         phone: location.phone || '',
-        email: location.email || ''
+        email: location.email || '',
+        whatsappNumber: location.whatsappNumber
       });
     } else {
       setEditingLocation({
@@ -79,7 +86,8 @@ const LocationsPage = () => {
         description: '',
         imageUrl: '',
         phone: '',
-        email: ''
+        email: '',
+        whatsappNumber: null
       });
     }
     setIsDialogOpen(true);
@@ -234,6 +242,16 @@ const LocationsPage = () => {
                   type="email"
                   value={editingLocation?.email || ''} 
                   onChange={(e) => setEditingLocation({...editingLocation!, email: e.target.value})} 
+                />
+              </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="whatsappNumber" className="text-right">WhatsApp</Label>
+                <Input 
+                  id="whatsappNumber" 
+                  className="col-span-3" 
+                  value={editingLocation?.whatsappNumber || ''} 
+                  onChange={(e) => setEditingLocation({...editingLocation!, whatsappNumber: e.target.value || null})} 
                 />
               </div>
             </div>
