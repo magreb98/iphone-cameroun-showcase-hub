@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link, Upload, X, Trash, Star } from "lucide-react";
 import { uploadProductImages, deleteProductImage, setMainImage } from "@/api/products";
 
-interface ProductImage {
+export interface ProductImage {
   id: number;
   url: string;
   isMain: boolean;
@@ -19,7 +19,7 @@ interface ImageManagerProps {
   imageUrl: string;
   setImageUrl: (url: string) => void;
   existingImages: ProductImage[];
-  setExistingImages: (images: ProductImage[]) => void;
+  setExistingImages: (images: ProductImage[] | ((prev: ProductImage[]) => ProductImage[])) => void;
 }
 
 const ProductImageManager = ({ 
@@ -58,7 +58,7 @@ const ProductImageManager = ({
       toast.success("Image principale définie avec succès");
       
       // Update existing images locally
-      setExistingImages(prev => 
+      setExistingImages((prev: ProductImage[]): ProductImage[] => 
         prev.map(img => ({
           ...img,
           isMain: img.id === data.image.id
@@ -106,7 +106,9 @@ const ProductImageManager = ({
     });
     
     // Also remove from local state
-    setExistingImages(prev => prev.filter(img => img.id !== imageId));
+    setExistingImages((prev: ProductImage[]): ProductImage[] => 
+      prev.filter(img => img.id !== imageId)
+    );
   };
 
   const handleSetMainImage = (imageId: number) => {
@@ -255,4 +257,3 @@ const ProductImageManager = ({
 };
 
 export default ProductImageManager;
-export type { ProductImage };
