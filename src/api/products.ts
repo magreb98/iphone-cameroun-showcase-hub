@@ -1,4 +1,3 @@
-
 import api from './index';
 import { Product } from '@/components/products/ProductCard';
 
@@ -8,6 +7,7 @@ export interface ProductFormData {
   price: number;
   imageUrl: string;
   categoryId: number;
+  locationId: number;
   inStock: boolean;
   quantity: number;
   isOnPromotion?: boolean;
@@ -30,12 +30,16 @@ export interface ProductResponseWithCategory {
   price: number;
   imageUrl: string;
   categoryId: number;
+  locationId: number;
   inStock: boolean;
   quantity: number;
   isOnPromotion: boolean;
   promotionPrice: number | null;
   promotionEndDate: string | null;
   Category: {
+    name: string;
+  };
+  Location: {
     name: string;
   };
   ProductImages: ProductImage[];
@@ -54,13 +58,17 @@ export interface ProductsResponse {
   pagination: PaginationData;
 }
 
-export const getProducts = async (page = 1, limit = 12, categoryId?: number): Promise<ProductsResponse> => {
+export const getProducts = async (page = 1, limit = 12, categoryId?: number, locationId?: number): Promise<ProductsResponse> => {
   const params = new URLSearchParams();
   params.append('page', page.toString());
   params.append('limit', limit.toString());
   
   if (categoryId) {
     params.append('category', categoryId.toString());
+  }
+  
+  if (locationId) {
+    params.append('location', locationId.toString());
   }
   
   const response = await api.get(`/products?${params.toString()}`);
@@ -72,6 +80,8 @@ export const getProducts = async (page = 1, limit = 12, categoryId?: number): Pr
     price: product.price,
     imageUrl: product.imageUrl,
     category: product.Category.name,
+    location: product.Location ? product.Location.name : '',
+    locationId: product.locationId,
     inStock: product.inStock,
     quantity: product.quantity,
     isOnPromotion: product.isOnPromotion,
@@ -100,6 +110,8 @@ export const getProduct = async (id: number): Promise<Product> => {
     price: response.data.price,
     imageUrl: response.data.imageUrl,
     category: response.data.Category.name,
+    location: response.data.Location ? response.data.Location.name : '',
+    locationId: response.data.locationId,
     inStock: response.data.inStock,
     quantity: response.data.quantity,
     isOnPromotion: response.data.isOnPromotion,
@@ -163,4 +175,38 @@ export const togglePromotion = async (id: number, promotionData: {
 export const deleteProduct = async (id: number): Promise<{ message: string }> => {
   const response = await api.delete(`/products/${id}`);
   return response.data;
+};
+
+export const getUserProducts = async (page = 1, limit = 10): Promise<ProductsResponse> => {
+  const params = new URLSearchParams();
+  params.append('page', page.toString());
+  params.append('limit', limit.toString());
+  
+  const response = await api.get(`/products/user?${params.toString()}`);
+  
+  // Transform API response to match our Product interface
+  const products: Product[] = response.data.products.map((product: ProductResponseWithCategory) => ({
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    imageUrl: product.imageUrl,
+    category: product.Category.name,
+    location: product.Location ? product.Location.name : '',
+    locationId: product.locationId,
+    inStock: product.inStock,
+    quantity: product.quantity,
+    isOnPromotion: product.isOnPromotion,
+    promotionPrice: product.promotionPrice,
+    promotionEndDate: product.promotionEndDate,
+    images: product.ProductImages ? product.ProductImages.map(img => ({
+      id: img.id,
+      url: img.imageUrl,
+      isMain: img.isMainImage
+    })) : []
+  }));
+  
+  return {
+    products,
+    pagination: response.data.pagination
+  };
 };

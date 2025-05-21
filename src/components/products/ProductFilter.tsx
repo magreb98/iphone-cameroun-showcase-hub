@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -12,15 +13,17 @@ export interface FilterOptions {
   maxPrice: number;
   inStock: boolean | null;
   brand: string | null;
+  location: string | null;
 }
 
 interface ProductFilterProps {
   onFilterChange: (filters: FilterOptions) => void;
   categories: string[];
   brands: string[];
+  locations: string[];
 }
 
-const ProductFilter = ({ onFilterChange, categories, brands }: ProductFilterProps) => {
+const ProductFilter = ({ onFilterChange, categories, brands, locations }: ProductFilterProps) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>({
     category: null,
@@ -28,6 +31,7 @@ const ProductFilter = ({ onFilterChange, categories, brands }: ProductFilterProp
     maxPrice: 1000000,
     inStock: null,
     brand: null,
+    location: null,
   });
 
   const handleFilterChange = (
@@ -59,6 +63,7 @@ const ProductFilter = ({ onFilterChange, categories, brands }: ProductFilterProp
       maxPrice: 1000000,
       inStock: null,
       brand: null,
+      location: null,
     };
     setFilters(defaultFilters);
     onFilterChange(defaultFilters);
@@ -98,6 +103,30 @@ const ProductFilter = ({ onFilterChange, categories, brands }: ProductFilterProp
                   className="ml-2 text-sm font-normal"
                 >
                   {category}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Emplacement */}
+        <div>
+          <h4 className="font-medium mb-2">Maison / Emplacement</h4>
+          <div className="space-y-2">
+            {locations.map((location) => (
+              <div key={location} className="flex items-center">
+                <Checkbox
+                  id={`location-${location}`}
+                  checked={filters.location === location}
+                  onCheckedChange={(checked) =>
+                    handleFilterChange("location", checked ? location : null)
+                  }
+                />
+                <Label
+                  htmlFor={`location-${location}`}
+                  className="ml-2 text-sm font-normal"
+                >
+                  {location}
                 </Label>
               </div>
             ))}

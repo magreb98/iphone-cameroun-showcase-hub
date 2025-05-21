@@ -1,6 +1,8 @@
 
 import { Link } from "react-router-dom";
-import { Tag } from "lucide-react";
+import { formatPrice } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
 export interface ProductImage {
   id: number;
@@ -14,8 +16,10 @@ export interface Product {
   price: number;
   imageUrl: string;
   category: string;
+  location?: string;
+  locationId?: number;
   inStock: boolean;
-  quantity?: number;
+  quantity: number;
   isOnPromotion?: boolean;
   promotionPrice?: number | null;
   promotionEndDate?: string | null;
@@ -26,73 +30,67 @@ interface ProductCardProps {
   product: Product;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const isPromotionValid = 
-    product.isOnPromotion && 
+const ProductCard = ({ product }: ProductCardProps) => {
+  // Calculer si la promotion est active
+  const isPromotionActive = product.isOnPromotion && 
     product.promotionPrice && 
     (!product.promotionEndDate || new Date(product.promotionEndDate) > new Date());
   
-  const displayPrice = isPromotionValid ? product.promotionPrice : product.price;
-  
-  // Use the first image from the images array if available, otherwise use the default imageUrl
-  const mainImage = product.images?.find(img => img.isMain)?.url || product.imageUrl;
+  // Calcul de la réduction en pourcentage
+  const discountPercentage = isPromotionActive && product.promotionPrice 
+    ? Math.round((1 - product.promotionPrice / product.price) * 100) 
+    : 0;
 
   return (
-    <Link
-      to={`/products/${product.id}`}
-      className="group block rounded-lg overflow-hidden border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all"
-    >
-      <div className="aspect-square w-full relative overflow-hidden bg-gray-100">
-        <img
-          src={mainImage}
-          alt={product.name}
-          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-        />
-        
-        {isPromotionValid && (
-          <div className="absolute top-0 left-0 bg-red-600 text-white py-1 px-3 flex items-center">
-            <Tag className="w-4 h-4 mr-2" />
-            <span className="font-medium">
-              -{Math.round(((product.price - (product.promotionPrice || 0)) / product.price) * 100)}%
-            </span>
+    <Link to={`/products/${product.id}`}>
+      <Card className="h-full hover:shadow-lg transition-shadow product-card">
+        <div className="relative pt-[100%] bg-white overflow-hidden">
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+          
+          {/* Badges */}
+          <div className="absolute top-2 left-2 flex flex-col gap-2">
+            {isPromotionActive && (
+              <Badge className="bg-red-500 text-white">-{discountPercentage}%</Badge>
+            )}
+            
+            {!product.inStock && (
+              <Badge variant="outline" className="bg-gray-700 text-white border-0">
+                Rupture de stock
+              </Badge>
+            )}
           </div>
-        )}
-        
-        {!product.inStock && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <span className="bg-white px-3 py-1 text-sm font-medium text-gray-900 rounded">
-              Indisponible
-            </span>
-          </div>
-        )}
-      </div>
-      
-      <div className="p-4">
-        <h3 className="text-lg font-medium mb-1 line-clamp-2">{product.name}</h3>
-        <div className="flex items-baseline gap-2 mb-1">
-          {isPromotionValid ? (
-            <>
-              <span className="text-red-600 font-bold">
-                {displayPrice?.toLocaleString()} FCFA
-              </span>
-              <span className="text-sm text-gray-500 line-through">
-                {product.price.toLocaleString()} FCFA
-              </span>
-            </>
-          ) : (
-            <span className="text-apple-blue font-bold">
-              {displayPrice?.toLocaleString()} FCFA
-            </span>
+          
+          {product.location && (
+            <Badge className="absolute top-2 right-2 bg-blue-500 text-white">
+              {product.location}
+            </Badge>
           )}
         </div>
-        <div className="text-sm text-gray-500">{product.category}</div>
+
+        <CardContent className="pt-4">
+          <div className="text-sm text-gray-500">{product.category}</div>
+          <h3 className="font-medium text-base line-clamp-2 my-1">{product.name}</h3>
+          
+          {isPromotionActive ? (
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="font-semibold text-red-500">{formatPrice(product.promotionPrice!)}</span>
+              <span className="text-gray-500 text-sm line-through">{formatPrice(product.price)}</span>
+            </div>
+          ) : (
+            <div className="mt-1 font-semibold">{formatPrice(product.price)}</div>
+          )}
+        </CardContent>
         
-        {product.images && product.images.length > 1 && (
-          <div className="mt-2 flex justify-end">
-            <span className="text-xs text-gray-500">{product.images.length} images</span>
+        <CardFooter className="px-6 py-3 border-t">
+          <div className="text-sm text-apple-blue w-full text-center font-medium">
+            Voir le détail
           </div>
-        )}
-      </div>
+        </CardFooter>
+      </Card>
     </Link>
   );
 };

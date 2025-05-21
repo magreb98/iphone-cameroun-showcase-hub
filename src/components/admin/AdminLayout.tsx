@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, 
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Home, Box, Tag, LogOut, Settings } from "lucide-react";
+import { Home, Box, Tag, LogOut, Settings, Building, Users } from "lucide-react";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -15,12 +15,21 @@ interface AdminLayoutProps {
 const AdminLayout = ({ children, title }: AdminLayoutProps) => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(false);
 
   // Vérification du token d'authentification
   useEffect(() => {
     const token = localStorage.getItem("admin_token");
     if (token) {
       setIsAuthenticated(true);
+      
+      // Vérifier si l'utilisateur est un super admin
+      try {
+        const tokenData = JSON.parse(atob(token.split('.')[1]));
+        setIsSuperAdmin(tokenData.isSuperAdmin || false);
+      } catch (error) {
+        console.error("Erreur lors du décodage du token:", error);
+      }
     } else {
       if (window.location.pathname !== "/admin") {
         toast.error("Veuillez vous connecter pour accéder à cette page");
@@ -78,6 +87,28 @@ const AdminLayout = ({ children, title }: AdminLayoutProps) => {
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+                  
+                  {isSuperAdmin && (
+                    <>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild>
+                          <Link to="/admin/locations" className="flex items-center">
+                            <Building className="mr-2 h-4 w-4" />
+                            <span>Emplacements</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild>
+                          <Link to="/admin/users" className="flex items-center">
+                            <Users className="mr-2 h-4 w-4" />
+                            <span>Utilisateurs</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </>
+                  )}
                   
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild>

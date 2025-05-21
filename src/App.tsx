@@ -17,6 +17,8 @@ import LoginPage from "./pages/admin/LoginPage";
 import DashboardPage from "./pages/admin/DashboardPage";
 import AdminProductsPage from "./pages/admin/ProductsPage";
 import CategoriesPage from "./pages/admin/CategoriesPage";
+import LocationsPage from "./pages/admin/LocationsPage";
+import UsersPage from "./pages/admin/UsersPage";
 import ConfigurationsPage from "./pages/admin/ConfigurationsPage";
 
 // Page 404
@@ -43,6 +45,8 @@ const App = () => (
           <Route path="/admin/dashboard" element={<DashboardPage />} />
           <Route path="/admin/products" element={<AdminProductsPage />} />
           <Route path="/admin/categories" element={<CategoriesPage />} />
+          <Route path="/admin/locations" element={<LocationsPage />} />
+          <Route path="/admin/users" element={<UsersPage />} />
           <Route path="/admin/configurations" element={<ConfigurationsPage />} />
           
           {/* Route par défaut (404) */}
