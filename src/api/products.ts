@@ -1,3 +1,4 @@
+
 import api from './index';
 import { Product } from '@/components/products/ProductCard';
 
@@ -41,6 +42,7 @@ export interface ProductResponseWithCategory {
   };
   Location: {
     name: string;
+    whatsappNumber?: string;
   };
   ProductImages: ProductImage[];
 }
@@ -82,6 +84,7 @@ export const getProducts = async (page = 1, limit = 12, categoryId?: number, loc
     category: product.Category.name,
     location: product.Location ? product.Location.name : '',
     locationId: product.locationId,
+    locationWhatsapp: product.Location ? product.Location.whatsappNumber : undefined,
     inStock: product.inStock,
     quantity: product.quantity,
     isOnPromotion: product.isOnPromotion,
@@ -112,6 +115,7 @@ export const getProduct = async (id: number): Promise<Product> => {
     category: response.data.Category.name,
     location: response.data.Location ? response.data.Location.name : '',
     locationId: response.data.locationId,
+    locationWhatsapp: response.data.Location ? response.data.Location.whatsappNumber : undefined,
     inStock: response.data.inStock,
     quantity: response.data.quantity,
     isOnPromotion: response.data.isOnPromotion,

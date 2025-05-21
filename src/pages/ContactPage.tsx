@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import MainLayout from "@/components/layout/MainLayout";
@@ -24,6 +23,7 @@ const ContactPage = () => {
   const [facebookLink, setFacebookLink] = useState("");
   const [instagramLink, setInstagramLink] = useState("");
 
+  // Toujours utiliser le numéro WhatsApp de l'admin principal pour la page contact
   const { data: whatsappConfig } = useQuery({
     queryKey: ['config', 'whatsapp_number'],
     queryFn: () => getConfiguration('whatsapp_number'),
@@ -95,7 +95,7 @@ const ContactPage = () => {
     setIsSubmitting(true);
     
     if (whatsappNumber) {
-      // Format the message for WhatsApp
+      // Format the message for WhatsApp - send to admin principal
       const message = encodeURIComponent(
         `*Nouveau message de contact*\n\n` +
         `*Nom*: ${formData.name}\n` +
@@ -104,7 +104,7 @@ const ContactPage = () => {
         `*Message*:\n${formData.message}`
       );
       
-      // Open WhatsApp with the pre-filled message
+      // Open WhatsApp with the pre-filled message to the admin principal
       window.open(`https://wa.me/${whatsappNumber.replace(/\+/g, '')}?text=${message}`, '_blank');
       
       toast.success("Message envoyé via WhatsApp !");

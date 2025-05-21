@@ -32,6 +32,10 @@ const Location = sequelize.define('Location', {
   email: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  whatsappNumber: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 }, {
   timestamps: true

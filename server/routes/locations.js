@@ -33,7 +33,7 @@ router.get('/:id', async (req, res) => {
 // Create a location (Super Admin only)
 router.post('/', protect, superAdmin, async (req, res) => {
   try {
-    const { name, address, description, imageUrl, phone, email } = req.body;
+    const { name, address, description, imageUrl, phone, email, whatsappNumber } = req.body;
     
     const location = await Location.create({
       name,
@@ -41,7 +41,8 @@ router.post('/', protect, superAdmin, async (req, res) => {
       description,
       imageUrl,
       phone,
-      email
+      email,
+      whatsappNumber
     });
     
     res.status(201).json(location);
@@ -59,7 +60,7 @@ router.put('/:id', protect, superAdmin, async (req, res) => {
       return res.status(404).json({ message: 'Location not found' });
     }
     
-    const { name, address, description, imageUrl, phone, email } = req.body;
+    const { name, address, description, imageUrl, phone, email, whatsappNumber } = req.body;
     
     location.name = name || location.name;
     location.address = address || location.address;
@@ -67,6 +68,7 @@ router.put('/:id', protect, superAdmin, async (req, res) => {
     location.imageUrl = imageUrl || location.imageUrl;
     location.phone = phone || location.phone;
     location.email = email || location.email;
+    location.whatsappNumber = whatsappNumber || location.whatsappNumber;
     
     await location.save();
     

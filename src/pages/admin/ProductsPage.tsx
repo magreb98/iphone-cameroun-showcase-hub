@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -202,6 +203,7 @@ const AdminProductsPage = () => {
           onOpenChange={setIsDialogOpen}
           editingProduct={editingProduct}
           categories={categories}
+          locations={locations}
         />
 
         <PromotionDialog

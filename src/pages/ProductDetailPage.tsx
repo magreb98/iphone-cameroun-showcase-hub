@@ -9,6 +9,7 @@ import { Tag, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { getProduct } from "@/api/products";
 import { getConfiguration } from "@/api/configurations";
+import { formatPrice } from "@/lib/utils";
 
 const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,21 +22,25 @@ const ProductDetailPage = () => {
     enabled: !!id
   });
   
-  // Fetch WhatsApp number from configurations
+  // Utiliser le numéro WhatsApp de l'emplacement du produit ou la configuration par défaut
   const { data: whatsappConfig } = useQuery({
     queryKey: ['config', 'whatsapp_number'],
     queryFn: () => getConfiguration('whatsapp_number')
   });
   
-  // Set whatsapp number when configuration is loaded
+  // Set whatsapp number when product and configuration are loaded
   useEffect(() => {
-    if (whatsappConfig && whatsappConfig.configValue) {
+    if (product && product.locationWhatsapp) {
+      // Priorité au numéro WhatsApp de l'emplacement
+      setWhatsappNumber(product.locationWhatsapp);
+    } else if (whatsappConfig && whatsappConfig.configValue) {
+      // Fallback sur le numéro WhatsApp global
       setWhatsappNumber(whatsappConfig.configValue);
     } else {
-      // Default WhatsApp number if configuration not found
+      // Numéro par défaut si aucune configuration n'est trouvée
       setWhatsappNumber("+237600000000");
     }
-  }, [whatsappConfig]);
+  }, [product, whatsappConfig]);
   
   const isPromotionValid = 
     product?.isOnPromotion && 
@@ -81,7 +86,8 @@ const ProductDetailPage = () => {
         `Je suis intéressé(e) par le produit suivant:\n\n` +
         `*${product.name}*\n` +
         `Prix: ${displayPrice?.toLocaleString()} FCFA\n` +
-        `Référence: #${product.id}\n\n` +
+        `Référence: #${product.id}\n` +
+        `Emplacement: ${product.location}\n\n` +
         `Veuillez me contacter pour plus d'informations.`
       );
       
@@ -143,15 +149,15 @@ const ProductDetailPage = () => {
                 {isPromotionValid ? (
                   <>
                     <p className="text-xl font-semibold text-red-600">
-                      {displayPrice?.toLocaleString()} FCFA
+                      {formatPrice(displayPrice)}
                     </p>
                     <p className="text-gray-500 line-through">
-                      {product.price.toLocaleString()} FCFA
+                      {formatPrice(product.price)}
                     </p>
                   </>
                 ) : (
                   <p className="text-xl font-semibold text-apple-blue">
-                    {displayPrice?.toLocaleString()} FCFA
+                    {formatPrice(displayPrice)}
                   </p>
                 )}
               </div>
@@ -172,6 +178,12 @@ const ProductDetailPage = () => {
                 <span className="text-sm text-gray-500">
                   {product.quantity} {product.quantity > 1 ? "unités disponibles" : "unité disponible"}
                 </span>
+              )}
+              
+              {product.location && (
+                <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
+                  Magasin: {product.location}
+                </Badge>
               )}
             </div>
             
@@ -228,8 +240,8 @@ const ProductDetailPage = () => {
                   <span className="font-medium">Apple</span>
                 </div>
                 <div className="text-sm">
-                  <span className="text-gray-500">Garantie:</span>{" "}
-                  <span className="font-medium">12 mois</span>
+                  <span className="text-gray-500">Magasin:</span>{" "}
+                  <span className="font-medium">{product.location || "Principal"}</span>
                 </div>
                 <div className="text-sm">
                   <span className="text-gray-500">État:</span>{" "}

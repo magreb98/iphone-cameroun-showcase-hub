@@ -18,6 +18,7 @@ export interface Product {
   category: string;
   location?: string;
   locationId?: number;
+  locationWhatsapp?: string;
   inStock: boolean;
   quantity: number;
   isOnPromotion?: boolean;
