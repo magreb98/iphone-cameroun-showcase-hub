@@ -4,23 +4,45 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Product } from "@/components/products/ProductCard";
-import { ShoppingBag, Package, Tag, MessageCircle } from "lucide-react"; // Changed from WhatsApp to MessageCircle
+import { ShoppingBag, Package, Tag, MessageCircle, Store } from "lucide-react";
 import { getProducts } from "@/api/products";
 import { getCategories } from "@/api/categories";
+import { getLocations, Location } from "@/api/locations";
 import { getConfiguration, saveConfiguration } from "@/api/configurations";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 const DashboardPage = () => {
   const queryClient = useQueryClient();
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<number | null>(null);
+  
+  const { user } = useAuth();
+  const isSuperAdmin = user?.isSuperAdmin;
 
+  // Fetch locations for superadmin
+  const { data: locations = [] } = useQuery({
+    queryKey: ['locations'],
+    queryFn: getLocations,
+    enabled: isSuperAdmin === true
+  });
+
+  // Init selectedLocation to user's location if not superadmin
+  useEffect(() => {
+    if (!isSuperAdmin && user?.locationId) {
+      setSelectedLocation(user.locationId);
+    }
+  }, [user, isSuperAdmin]);
+
+  // Query for products based on selected location or user's location
   const { data: productsData } = useQuery({
-    queryKey: ['products', 1],
-    queryFn: () => getProducts(1, 10)
+    queryKey: ['products', 1, selectedLocation],
+    queryFn: () => getProducts(1, 1000, undefined, selectedLocation || undefined)
   });
   
   const { data: categories = [] } = useQuery({
@@ -28,25 +50,30 @@ const DashboardPage = () => {
     queryFn: getCategories
   });
 
-  // Fetch WhatsApp configuration
+  // Get WhatsApp configuration by location
+  const configKey = selectedLocation ? `whatsapp_number_${selectedLocation}` : 'whatsapp_number';
+  
   const { data: whatsappConfig } = useQuery({
-    queryKey: ['config', 'whatsapp_number'],
-    queryFn: () => getConfiguration('whatsapp_number')
+    queryKey: ['config', configKey],
+    queryFn: () => getConfiguration(configKey),
+    enabled: !!selectedLocation
   });
 
   // Set WhatsApp number when config is loaded
   useEffect(() => {
     if (whatsappConfig && whatsappConfig.configValue) {
       setWhatsappNumber(whatsappConfig.configValue);
+    } else {
+      setWhatsappNumber("");
     }
   }, [whatsappConfig]);
 
   // Save WhatsApp configuration mutation
   const saveWhatsappMutation = useMutation({
     mutationFn: (configValue: string) => saveConfiguration({
-      configKey: 'whatsapp_number',
+      configKey: configKey,
       configValue,
-      description: 'Numéro WhatsApp pour les contacts clients'
+      description: `Numéro WhatsApp pour le magasin ${selectedLocation}`
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['config'] });
@@ -68,7 +95,13 @@ const DashboardPage = () => {
   const averagePrice = products.length ? 
     Math.round(products.reduce((sum, p) => sum + p.price, 0) / totalProducts) : 0;
 
+  const handleLocationChange = (value: string) => {
+    setSelectedLocation(value ? parseInt(value) : null);
+  };
+
   const handleWhatsappNumberSave = async () => {
+    if (!selectedLocation) return;
+    
     setLoading(true);
     try {
       // Remove any spaces and make sure it starts with +
@@ -84,9 +117,43 @@ const DashboardPage = () => {
     }
   };
 
+  // Trouver le nom du magasin actuel
+  const currentLocation = locations.find(loc => loc.id === selectedLocation);
+  const locationName = currentLocation ? currentLocation.name : "Tous les magasins";
+
   return (
-    <AdminLayout title="Tableau de Bord">
+    <AdminLayout title={`Tableau de Bord ${isSuperAdmin ? `- ${locationName}` : ''}`}>
       <div className="space-y-8">
+        {/* Location selector for superadmin */}
+        {isSuperAdmin && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center text-lg">
+                <Store className="mr-2 h-5 w-5" />
+                Sélectionner un magasin
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Select
+                value={selectedLocation?.toString() || ""}
+                onValueChange={handleLocationChange}
+              >
+                <SelectTrigger className="w-full md:w-[300px]">
+                  <SelectValue placeholder="Sélectionner un magasin" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Tous les magasins</SelectItem>
+                  {locations.map((loc) => (
+                    <SelectItem key={loc.id} value={loc.id.toString()}>
+                      {loc.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Cards Overview */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
@@ -154,47 +221,49 @@ const DashboardPage = () => {
           </Card>
         </div>
 
-        {/* WhatsApp Configuration */}
-        {/*<Card>*/}
-        {/*  <CardHeader className="flex flex-row items-center space-y-0 pb-2">*/}
-        {/*    <CardTitle className="text-lg font-medium">Configuration WhatsApp</CardTitle>*/}
-        {/*    <MessageCircle className="h-5 w-5 text-green-600 ml-2" />*/}
-        {/*  </CardHeader>*/}
-        {/*  <CardContent className="pt-4">*/}
-        {/*    <div className="space-y-4">*/}
-        {/*      <p className="text-sm text-gray-600">*/}
-        {/*        Ce numéro sera utilisé pour recevoir des messages des clients via WhatsApp.*/}
-        {/*        Assurez-vous que le numéro est valide et a un compte WhatsApp actif.*/}
-        {/*      </p>*/}
-        {/*      */}
-        {/*      <div className="flex items-end gap-3">*/}
-        {/*        <div className="flex-grow space-y-1">*/}
-        {/*          <Label htmlFor="whatsappNumber">Numéro WhatsApp</Label>*/}
-        {/*          <Input*/}
-        {/*            id="whatsappNumber"*/}
-        {/*            value={whatsappNumber}*/}
-        {/*            onChange={(e) => setWhatsappNumber(e.target.value)}*/}
-        {/*            placeholder="+237 6XX XXX XXX"*/}
-        {/*          />*/}
-        {/*        </div>*/}
-        {/*        <Button */}
-        {/*          onClick={handleWhatsappNumberSave}*/}
-        {/*          disabled={loading || !whatsappNumber}*/}
-        {/*        >*/}
-        {/*          {loading ? "Sauvegarde..." : "Sauvegarder"}*/}
-        {/*        </Button>*/}
-        {/*      </div>*/}
-        {/*      */}
-        {/*      <p className="text-xs text-gray-500">*/}
-        {/*        Format: +237 6XXXXXXXX (avec l'indicatif du pays)*/}
-        {/*      </p>*/}
-        {/*    </div>*/}
-        {/*  </CardContent>*/}
-        {/*</Card>*/}
+        {/* WhatsApp Configuration - enabled for specific location only */}
+        {selectedLocation && (
+          <Card>
+            <CardHeader className="flex flex-row items-center space-y-0 pb-2">
+              <CardTitle className="text-lg font-medium">Configuration WhatsApp pour {locationName}</CardTitle>
+              <MessageCircle className="h-5 w-5 text-green-600 ml-2" />
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Ce numéro sera utilisé pour recevoir des messages des clients via WhatsApp.
+                  Assurez-vous que le numéro est valide et a un compte WhatsApp actif.
+                </p>
+                
+                <div className="flex items-end gap-3">
+                  <div className="flex-grow space-y-1">
+                    <Label htmlFor="whatsappNumber">Numéro WhatsApp</Label>
+                    <Input
+                      id="whatsappNumber"
+                      value={whatsappNumber}
+                      onChange={(e) => setWhatsappNumber(e.target.value)}
+                      placeholder="+237 6XX XXX XXX"
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleWhatsappNumberSave}
+                    disabled={loading || !whatsappNumber}
+                  >
+                    {loading ? "Sauvegarde..." : "Sauvegarder"}
+                  </Button>
+                </div>
+                
+                <p className="text-xs text-gray-500">
+                  Format: +237 6XXXXXXXX (avec l'indicatif du pays)
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Recent Products */}
         <div>
-          <h2 className="text-xl font-semibold mb-4">Produits récents</h2>
+          <h2 className="text-xl font-semibold mb-4">Produits récents {selectedLocation ? `de ${locationName}` : ''}</h2>
           <div className="rounded-md border">
             <table className="w-full text-sm">
               <thead className="bg-muted">
@@ -204,6 +273,7 @@ const DashboardPage = () => {
                   <th className="p-3 text-left font-medium">Prix (FCFA)</th>
                   <th className="p-3 text-left font-medium">Stock</th>
                   <th className="p-3 text-left font-medium">Statut</th>
+                  {isSuperAdmin && <th className="p-3 text-left font-medium">Magasin</th>}
                 </tr>
               </thead>
               <tbody>
@@ -235,8 +305,18 @@ const DashboardPage = () => {
                         </span>
                       )}
                     </td>
+                    {isSuperAdmin && (
+                      <td className="p-3">{product.location}</td>
+                    )}
                   </tr>
                 ))}
+                {products.length === 0 && (
+                  <tr>
+                    <td colSpan={isSuperAdmin ? 6 : 5} className="p-4 text-center text-gray-500">
+                      Aucun produit trouvé.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

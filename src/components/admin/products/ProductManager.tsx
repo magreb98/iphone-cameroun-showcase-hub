@@ -1,11 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getProducts } from "@/api/products";
+import { getUserProducts, getProducts } from "@/api/products";
 import { getCategories } from "@/api/categories";
 import { getLocations } from "@/api/locations";
 import { ProductFormData } from "@/api/products";
 import { Product } from "@/components/products/ProductCard";
+import { useAuth } from "@/hooks/useAuth"; // Nouveau: hook d'authentification
 
 // Import our components
 import ProductSearchBar from "@/components/admin/products/ProductSearchBar";
@@ -13,6 +14,8 @@ import ProductTable from "@/components/admin/products/ProductTable";
 import ProductFormDialog from "@/components/admin/products/ProductFormDialog";
 import PromotionDialog from "@/components/admin/products/PromotionDialog";
 import DataPagination from "@/components/admin/common/DataPagination";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 const ProductManager = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,11 +24,25 @@ const ProductManager = () => {
   const [editingProduct, setEditingProduct] = useState<ProductFormData | null>(null);
   const [promotionProduct, setPromotionProduct] = useState<Product | null>(null);
   const [page, setPage] = useState(1);
+  const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null);
   const limit = 10; // Number of products per page in admin
+  
+  // Récupérer les informations d'authentification de l'utilisateur
+  const { user } = useAuth();
+  const isSuperAdmin = user?.isSuperAdmin;
+
+  // Si c'est un superAdmin, il peut filtrer par magasin
+  const fetchProductsQuery = isSuperAdmin 
+    ? ['products', page, selectedLocationId]
+    : ['userProducts', page];
+
+  const fetchProductsFn = isSuperAdmin 
+    ? () => getProducts(page, limit, undefined, selectedLocationId || undefined)
+    : () => getUserProducts(page, limit);
 
   const { data, isLoading: isLoadingProducts } = useQuery({
-    queryKey: ['products', page],
-    queryFn: () => getProducts(page, limit)
+    queryKey: fetchProductsQuery,
+    queryFn: fetchProductsFn
   });
   
   const products = data?.products || [];
@@ -89,6 +106,11 @@ const ProductManager = () => {
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
   };
+  
+  const handleLocationChange = (locationId: string) => {
+    setSelectedLocationId(locationId ? parseInt(locationId) : null);
+    setPage(1); // Reset to first page when changing location
+  };
 
   if (isLoadingProducts || isLoadingCategories || isLoadingLocations) {
     return (
@@ -100,11 +122,36 @@ const ProductManager = () => {
 
   return (
     <div className="space-y-6">
-      <ProductSearchBar 
-        searchQuery={searchQuery}
-        onSearchChange={handleSearchChange}
-        onAddProduct={() => handleOpenDialog()}
-      />
+      <div className="flex flex-col md:flex-row gap-4 justify-between">
+        <ProductSearchBar 
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          onAddProduct={() => handleOpenDialog()}
+        />
+        
+        {/* Filtre par magasin pour le superadmin */}
+        {isSuperAdmin && (
+          <div className="w-full md:w-64">
+            <Label htmlFor="location-select" className="mb-1 block">Filtrer par magasin</Label>
+            <Select
+              value={selectedLocationId?.toString() || ""}
+              onValueChange={handleLocationChange}
+            >
+              <SelectTrigger id="location-select">
+                <SelectValue placeholder="Tous les magasins" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Tous les magasins</SelectItem>
+                {locations.map((location) => (
+                  <SelectItem key={location.id} value={location.id.toString()}>
+                    {location.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
 
       <ProductTable 
         products={filteredProducts}
