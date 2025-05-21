@@ -6,6 +6,14 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface RegisterData {
+  email: string;
+  password: string;
+  isAdmin?: boolean;
+  isSuperAdmin?: boolean;
+  locationId?: number | null;
+}
+
 export interface User {
   id: number;
   email: string;
@@ -38,4 +46,24 @@ export const getAuthStatus = async (): Promise<User | null> => {
   } catch (error) {
     return null;
   }
+};
+
+// Nouvelles fonctions pour gérer les utilisateurs (admin)
+export const getUsers = async (): Promise<User[]> => {
+  const response = await api.get('/auth/users');
+  return response.data;
+};
+
+export const createUser = async (userData: RegisterData): Promise<User> => {
+  const response = await api.post('/auth/register', userData);
+  return response.data;
+};
+
+export const updateUser = async (id: number, userData: Partial<RegisterData>): Promise<User> => {
+  const response = await api.put(`/auth/users/${id}`, userData);
+  return response.data;
+};
+
+export const deleteUser = async (id: number): Promise<void> => {
+  await api.delete(`/auth/users/${id}`);
 };

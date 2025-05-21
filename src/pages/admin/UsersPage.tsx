@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/AdminLayout";
-import { getUsers, createUser, updateUser, deleteUser, RegisterData } from "@/api/auth";
+import { getUsers, createUser, updateUser, deleteUser, RegisterData, User } from "@/api/auth";
 import { getLocations } from "@/api/locations";
 import { Button } from "@/components/ui/button";
 import { Plus, Pencil, Trash } from "lucide-react";
@@ -68,7 +67,7 @@ const UsersPage = () => {
     }
   });
 
-  const handleOpenDialog = (user?: any) => {
+  const handleOpenDialog = (user?: User) => {
     if (user) {
       setEditingUser({
         id: user.id,
