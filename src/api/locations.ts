@@ -12,6 +12,17 @@ export interface Location {
   whatsappNumber: string | null;
 }
 
+export interface LocationFormData {
+  id?: number;
+  name: string;
+  address: string;
+  description: string;
+  imageUrl: string;
+  phone: string;
+  email: string;
+  whatsappNumber?: string;
+}
+
 export const getLocations = async (): Promise<Location[]> => {
   const response = await api.get('/locations');
   return response.data;
