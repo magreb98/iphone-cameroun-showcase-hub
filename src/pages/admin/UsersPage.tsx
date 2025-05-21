@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/AdminLayout";
-import { getUsers, createUser, updateUser, deleteUser, RegisterData } from "@/api/auth";
+import { getUsers, createUser, updateUser, deleteUser, RegisterData, User } from "@/api/auth";
 import { getLocations } from "@/api/locations";
 import { Button } from "@/components/ui/button";
 import { Plus, Pencil, Trash } from "lucide-react";
@@ -68,7 +67,7 @@ const UsersPage = () => {
     }
   });
 
-  const handleOpenDialog = (user?: any) => {
+  const handleOpenDialog = (user?: User) => {
     if (user) {
       setEditingUser({
         id: user.id,
@@ -76,7 +75,8 @@ const UsersPage = () => {
         password: '', // Le mot de passe ne doit pas être pré-rempli
         isAdmin: user.isAdmin,
         isSuperAdmin: user.isSuperAdmin,
-        locationId: user.locationId
+        locationId: user.locationId,
+        name: user.name
       });
     } else {
       setEditingUser({
@@ -84,7 +84,8 @@ const UsersPage = () => {
         password: '',
         isAdmin: true,
         isSuperAdmin: false,
-        locationId: null
+        locationId: null,
+        name: null
       });
     }
     setIsDialogOpen(true);
@@ -209,6 +210,17 @@ const UsersPage = () => {
                   value={editingUser?.password || ''} 
                   onChange={(e) => setEditingUser({...editingUser!, password: e.target.value})} 
                   required={!editingUser?.id} // Requis uniquement pour la création
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">Nom</Label>
+                <Input 
+                  id="name" 
+                  className="col-span-3"
+                  type="text" 
+                  value={editingUser?.name || ''} 
+                  onChange={(e) => setEditingUser({...editingUser!, name: e.target.value})} 
                 />
               </div>
               

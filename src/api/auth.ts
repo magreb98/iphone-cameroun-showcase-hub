@@ -6,6 +6,15 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface RegisterData {
+  email: string;
+  password: string;
+  isAdmin?: boolean;
+  isSuperAdmin?: boolean;
+  locationId?: number | null;
+  name?: string | null;
+}
+
 export interface User {
   id: number;
   email: string;
@@ -23,7 +32,7 @@ export const login = async (credentials: LoginCredentials): Promise<User> => {
   // Store token in localStorage
   localStorage.setItem('token', token);
   
-  return user;
+  return { ...user, token };
 };
 
 export const logout = async (): Promise<void> => {
@@ -38,4 +47,24 @@ export const getAuthStatus = async (): Promise<User | null> => {
   } catch (error) {
     return null;
   }
+};
+
+// User management functions (admin)
+export const getUsers = async (): Promise<User[]> => {
+  const response = await api.get('/auth/users');
+  return response.data;
+};
+
+export const createUser = async (userData: RegisterData): Promise<User> => {
+  const response = await api.post('/auth/register', userData);
+  return response.data;
+};
+
+export const updateUser = async (id: number, userData: Partial<RegisterData>): Promise<User> => {
+  const response = await api.put(`/auth/users/${id}`, userData);
+  return response.data;
+};
+
+export const deleteUser = async (id: number): Promise<void> => {
+  await api.delete(`/auth/users/${id}`);
 };
