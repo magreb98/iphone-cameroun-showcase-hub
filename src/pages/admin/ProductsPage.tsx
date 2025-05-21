@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { getProducts } from "@/api/products";
 import { getCategories } from "@/api/categories";
+import { getLocations } from "@/api/locations";
 import { ProductFormData } from "@/api/products";
 import { Product } from "@/components/products/ProductCard";
 import { 
@@ -50,6 +50,11 @@ const AdminProductsPage = () => {
     queryFn: getCategories
   });
 
+  const { data: locations = [], isLoading: isLoadingLocations } = useQuery({
+    queryKey: ['locations'],
+    queryFn: getLocations
+  });
+
   const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.category.toLowerCase().includes(searchQuery.toLowerCase())
@@ -66,6 +71,7 @@ const AdminProductsPage = () => {
         name: product.name,
         price: product.price,
         categoryId: categoryId,
+        locationId: product.locationId || 1, // Use the product's locationId or default
         inStock: product.inStock,
         quantity: product.quantity || 0,
         imageUrl: product.imageUrl,
@@ -92,7 +98,7 @@ const AdminProductsPage = () => {
     setPage(newPage);
   };
 
-  if (isLoadingProducts || isLoadingCategories) {
+  if (isLoadingProducts || isLoadingCategories || isLoadingLocations) {
     return (
       <AdminLayout title="Gestion des Produits">
         <div className="flex justify-center items-center h-64">

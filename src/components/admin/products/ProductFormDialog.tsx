@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Image as ImageIcon, Link, Upload, X, Trash, Star } from "lucide-react";
 import { createProduct, updateProduct, uploadProductImages, deleteProductImage, setMainImage, ProductFormData } from "@/api/products";
+import { getLocations } from "@/api/locations";
 import { Product } from "@/components/products/ProductCard";
 
 interface Category {
@@ -31,6 +31,7 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
     name: "",
     price: 0,
     categoryId: 0,
+    locationId: 0,
     inStock: true,
     quantity: 0,
     imageUrl: ""
@@ -39,6 +40,16 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<{id: number, url: string, isMain: boolean}[]>([]);
+
+  // Fetch locations for selection
+  const { data: locations = [] } = useQuery({
+    queryKey: ['locations'],
+    queryFn: getLocations
+  });
+  
+  // Check if current user is a super admin (to show location selection)
+  const currentUser = queryClient.getQueryData<any>(["currentUser"]);
+  const isSuperAdmin = currentUser?.isSuperAdmin;
 
   useEffect(() => {
     if (editingProduct) {
@@ -57,6 +68,7 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
         name: "",
         price: 0,
         categoryId: 0,
+        locationId: currentUser?.locationId || 0,
         inStock: true,
         quantity: 0,
         imageUrl: ""
@@ -65,7 +77,7 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
     }
     setSelectedFiles([]);
     setPreviewImages([]);
-  }, [editingProduct, queryClient]);
+  }, [editingProduct, queryClient, currentUser?.locationId]);
 
   const createProductMutation = useMutation({
     mutationFn: createProduct,
@@ -168,7 +180,7 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
   const handleSelectChange = (value: string, field: string) => {
     setFormData({
       ...formData,
-      [field]: field === "categoryId" ? Number(value) : value
+      [field]: field === "categoryId" || field === "locationId" ? Number(value) : value
     });
   };
 
@@ -315,6 +327,30 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Location input - only visible for super admins */}
+            {isSuperAdmin && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="location" className="text-right">
+                  Emplacement
+                </Label>
+                <Select
+                  value={formData.locationId.toString()}
+                  onValueChange={(value) => handleSelectChange(value, "locationId")}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Sélectionnez un emplacement" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((location) => (
+                      <SelectItem key={location.id} value={location.id.toString()}>
+                        {location.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="quantity" className="text-right">
@@ -495,4 +531,3 @@ const ProductFormDialog = ({ open, onOpenChange, editingProduct, categories }: P
 };
 
 export default ProductFormDialog;
-
