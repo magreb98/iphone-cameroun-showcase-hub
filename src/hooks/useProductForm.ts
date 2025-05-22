@@ -76,7 +76,7 @@ export const useProductForm = (
     },
     onError: (error) => {
       toast.error("Erreur lors de l'ajout du produit");
-      console.error(error);
+      console.error(error.message);
     }
   });
 
