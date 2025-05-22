@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { getLocations, deleteLocation, Location, LocationFormData } from "@/api/locations";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil, Trash, Building, Search, Map, FileImage, Share2 } from "lucide-react";
+import { Plus, Pencil, Trash, Building, Search, Map, FileImage, Share2, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import LocationFormDialog from "@/components/admin/locations/LocationFormDialog";
