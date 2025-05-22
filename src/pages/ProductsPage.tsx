@@ -151,7 +151,7 @@ const ProductsPage = () => {
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Barre latérale avec filtres */}
             <aside className="lg:col-span-1">
               <ProductFilter
@@ -172,7 +172,7 @@ const ProductsPage = () => {
                 </div>
               ) : (
                 <>
-                  <div className="product-grid">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
                     {filteredProducts.map((product) => (
                       <ProductCard key={product.id} product={product} />
                     ))}

@@ -44,8 +44,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
   return (
     <Link to={`/products/${product.id}`}>
-      <Card className="h-full hover:shadow-lg transition-shadow product-card">
-        <div className="relative pt-[100%] bg-white overflow-hidden">
+      <Card className="h-full hover:shadow-lg transition-shadow product-card max-w-xs">
+        <div className="relative pt-[80%] bg-white overflow-hidden">
           <img
             src={product.imageUrl}
             alt={product.name}
@@ -55,39 +55,39 @@ const ProductCard = ({ product }: ProductCardProps) => {
           {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-2">
             {isPromotionActive && (
-              <Badge className="bg-red-500 text-white">-{discountPercentage}%</Badge>
+              <Badge className="bg-red-500 text-white text-xs">-{discountPercentage}%</Badge>
             )}
             
             {!product.inStock && (
-              <Badge variant="outline" className="bg-gray-700 text-white border-0">
+              <Badge variant="outline" className="bg-gray-700 text-white border-0 text-xs">
                 Rupture de stock
               </Badge>
             )}
           </div>
           
           {product.location && (
-            <Badge className="absolute top-2 right-2 bg-blue-500 text-white">
+            <Badge className="absolute top-2 right-2 bg-blue-500 text-white text-xs">
               {product.location}
             </Badge>
           )}
         </div>
 
-        <CardContent className="pt-4">
-          <div className="text-sm text-gray-500">{product.category}</div>
-          <h3 className="font-medium text-base line-clamp-2 my-1">{product.name}</h3>
+        <CardContent className="pt-3 px-3 pb-1">
+          <div className="text-xs text-gray-500">{product.category}</div>
+          <h3 className="font-medium text-sm line-clamp-2 my-1">{product.name}</h3>
           
           {isPromotionActive ? (
             <div className="mt-1 flex items-baseline gap-2">
-              <span className="font-semibold text-red-500">{formatPrice(product.promotionPrice!)}</span>
-              <span className="text-gray-500 text-sm line-through">{formatPrice(product.price)}</span>
+              <span className="font-semibold text-red-500 text-sm">{formatPrice(product.promotionPrice!)}</span>
+              <span className="text-gray-500 text-xs line-through">{formatPrice(product.price)}</span>
             </div>
           ) : (
-            <div className="mt-1 font-semibold">{formatPrice(product.price)}</div>
+            <div className="mt-1 font-semibold text-sm">{formatPrice(product.price)}</div>
           )}
         </CardContent>
         
-        <CardFooter className="px-6 py-3 border-t">
-          <div className="text-sm text-apple-blue w-full text-center font-medium">
+        <CardFooter className="px-3 py-2 border-t">
+          <div className="text-xs text-apple-blue w-full text-center font-medium">
             Voir le détail
           </div>
         </CardFooter>
