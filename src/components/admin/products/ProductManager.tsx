@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getUserProducts, getProducts } from "@/api/products";
@@ -6,7 +5,7 @@ import { getCategories } from "@/api/categories";
 import { getLocations } from "@/api/locations";
 import { ProductFormData } from "@/api/products";
 import { Product } from "@/components/products/ProductCard";
-import { useAuth } from "@/hooks/useAuth"; // Nouveau: hook d'authentification
+import { useAuth } from "@/hooks/useAuth";
 
 // Import our components
 import ProductSearchBar from "@/components/admin/products/ProductSearchBar";
@@ -108,7 +107,7 @@ const ProductManager = () => {
   };
   
   const handleLocationChange = (locationId: string) => {
-    setSelectedLocationId(locationId ? parseInt(locationId) : null);
+    setSelectedLocationId(locationId === "all" ? null : parseInt(locationId));
     setPage(1); // Reset to first page when changing location
   };
 
@@ -134,14 +133,14 @@ const ProductManager = () => {
           <div className="w-full md:w-64">
             <Label htmlFor="location-select" className="mb-1 block">Filtrer par magasin</Label>
             <Select
-              value={selectedLocationId?.toString() || ""}
+              value={selectedLocationId?.toString() || "all"}
               onValueChange={handleLocationChange}
             >
               <SelectTrigger id="location-select">
                 <SelectValue placeholder="Tous les magasins" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous les magasins</SelectItem>
+                <SelectItem value="all">Tous les magasins</SelectItem>
                 {locations.map((location) => (
                   <SelectItem key={location.id} value={location.id.toString()}>
                     {location.name}

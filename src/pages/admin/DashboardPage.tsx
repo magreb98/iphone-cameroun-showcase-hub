@@ -58,7 +58,7 @@ const DashboardPage = () => {
   });
 
   const handleLocationChange = (value: string) => {
-    setSelectedLocation(value ? parseInt(value) : null);
+    setSelectedLocation(value === "all" ? null : parseInt(value));
   };
 
   // Trouver le nom du magasin actuel
@@ -83,7 +83,7 @@ const DashboardPage = () => {
             </CardHeader>
             <CardContent>
               <Select
-                value={selectedLocation?.toString() || ""}
+                value={selectedLocation?.toString() || "all"}
                 onValueChange={handleLocationChange}
               >
                 <SelectTrigger className="w-full md:w-[300px]">
