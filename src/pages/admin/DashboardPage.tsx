@@ -90,7 +90,7 @@ const DashboardPage = () => {
                   <SelectValue placeholder="Sélectionner un magasin" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tous les magasins</SelectItem>
+                  <SelectItem value="all">Tous les magasins</SelectItem>
                   {locations.map((loc) => (
                     <SelectItem key={loc.id} value={loc.id.toString()}>
                       {loc.name}
