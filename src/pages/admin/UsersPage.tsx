@@ -7,6 +7,7 @@ import { getLocations } from "@/api/locations";
 import UserForm from "@/components/admin/users/UserForm";
 import UserTable from "@/components/admin/users/UserTable";
 import { useUsers } from "@/hooks/useUsers";
+import { User } from "@/api/auth";
 
 const UsersPage = () => {
   const {
@@ -42,7 +43,7 @@ const UsersPage = () => {
         <div className="text-center py-10">Chargement...</div>
       ) : (
         <UserTable 
-          users={users} 
+          users={users as User[]} 
           onEdit={handleOpenDialog} 
           onDelete={handleDelete} 
           getLocationName={getLocationName} 
