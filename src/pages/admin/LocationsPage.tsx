@@ -17,19 +17,7 @@ const LocationsPage = () => {
   const queryClient = useQueryClient();
   const { isSuperAdmin } = useAuth();
   
-  // Redirect if not superadmin
-  if (!isSuperAdmin) {
-    return (
-      <AdminLayout title="Accès refusé">
-        <div className="flex flex-col items-center justify-center h-64 gap-4">
-          <Building className="h-16 w-16 text-gray-400" />
-          <h2 className="text-xl font-medium text-gray-700">Accès refusé</h2>
-          <p className="text-gray-500">Seuls les super administrateurs peuvent gérer les magasins.</p>
-        </div>
-      </AdminLayout>
-    );
-  }
-  
+  // Always fetch locations, regardless of user role
   const { data: locations = [], isLoading } = useQuery({
     queryKey: ['locations'],
     queryFn: getLocations
@@ -70,6 +58,19 @@ const LocationsPage = () => {
       deleteMutation.mutate(id);
     }
   };
+
+  // If not superadmin, show access denied screen
+  if (!isSuperAdmin) {
+    return (
+      <AdminLayout title="Accès refusé">
+        <div className="flex flex-col items-center justify-center h-64 gap-4">
+          <Building className="h-16 w-16 text-gray-400" />
+          <h2 className="text-xl font-medium text-gray-700">Accès refusé</h2>
+          <p className="text-gray-500">Seuls les super administrateurs peuvent gérer les magasins.</p>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout title="Gestion des Magasins">
