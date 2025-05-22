@@ -18,7 +18,7 @@ import LoginPage from "./pages/admin/LoginPage";
 import DashboardPage from "./pages/admin/DashboardPage";
 import AdminProductsPage from "./pages/admin/ProductsPage";
 import CategoriesPage from "./pages/admin/CategoriesPage";
-import LocationsPage as AdminLocationsPage from "./pages/admin/LocationsPage";
+import AdminLocationsPage from "./pages/admin/LocationsPage";
 import UsersPage from "./pages/admin/UsersPage";
 import ConfigurationsPage from "./pages/admin/ConfigurationsPage";
 
