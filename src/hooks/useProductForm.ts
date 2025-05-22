@@ -40,11 +40,14 @@ export const useProductForm = (
         }
       }
     } else {
+      // Pour un nouveau produit, initialiser avec un ID de magasin valide si disponible
+      const firstLocationId = queryClient.getQueryData<any>(["locations"])?.[0]?.id || 1;
+      
       setFormData({
         name: "",
         price: 0,
         categoryId: 0,
-        locationId: currentUser?.locationId || 0,
+        locationId: currentUser?.locationId || firstLocationId,
         inStock: true,
         quantity: 0,
         imageUrl: ""
@@ -131,8 +134,13 @@ export const useProductForm = (
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // For upload tab, if we don't have a URL but have files, set a placeholder URL
+    // Vérification supplémentaire pour s'assurer que locationId n'est pas 0
     const finalFormData = {...formData};
+    
+    if (finalFormData.locationId === 0) {
+      toast.error("Veuillez sélectionner un magasin");
+      return;
+    }
     
     if (editingProduct && editingProduct.id) {
       // Update existing product

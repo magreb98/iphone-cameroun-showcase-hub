@@ -57,7 +57,7 @@ const LocationsPage = () => {
         imageUrl: location.imageUrl || '',
         phone: location.phone || '',
         email: location.email || '',
-        whatsappNumber: location.whatsappNumber
+        whatsappNumber: location.whatsappNumber || null
       });
     } else {
       setEditingLocation(null);

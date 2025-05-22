@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createLocation, updateLocation, Location, LocationFormData } from "@/api/locations";
+import { createLocation, updateLocation, LocationFormData } from "@/api/locations";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
