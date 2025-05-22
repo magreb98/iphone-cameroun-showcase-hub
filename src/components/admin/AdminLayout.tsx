@@ -94,7 +94,7 @@ const AdminLayout = ({ children, title }: AdminLayoutProps) => {
                         <SidebarMenuButton asChild>
                           <Link to="/admin/locations" className="flex items-center">
                             <Building className="mr-2 h-4 w-4" />
-                            <span>Emplacements</span>
+                            <span>Magasins</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
