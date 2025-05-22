@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, 
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Home, Box, Tag, LogOut, Settings, Building, Users } from "lucide-react";
+import { Home, Box, Tag, LogOut, Settings, Building, Users, MapPin } from "lucide-react";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -88,26 +88,24 @@ const AdminLayout = ({ children, title }: AdminLayoutProps) => {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link to="/admin/locations" className="flex items-center">
+                        <MapPin className="mr-2 h-4 w-4" />
+                        <span>Magasins</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  
                   {isSuperAdmin && (
-                    <>
-                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                          <Link to="/admin/locations" className="flex items-center">
-                            <Building className="mr-2 h-4 w-4" />
-                            <span>Magasins</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                      
-                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                          <Link to="/admin/users" className="flex items-center">
-                            <Users className="mr-2 h-4 w-4" />
-                            <span>Utilisateurs</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    </>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild>
+                        <Link to="/admin/users" className="flex items-center">
+                          <Users className="mr-2 h-4 w-4" />
+                          <span>Utilisateurs</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
                   )}
                   
                   <SidebarMenuItem>

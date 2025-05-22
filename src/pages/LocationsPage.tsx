@@ -1,14 +1,18 @@
-
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import MainLayout from "@/components/layout/MainLayout";
 import { getLocations, Location } from "@/api/locations";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building, MapPin, Phone, Mail } from "lucide-react";
+import { Building, MapPin, Phone, Mail, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/hooks/useAuth";
 
 const LocationsPage = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+  
+  // Utilisez toujours useQuery de manière non conditionnelle
   const { data: locations = [], isLoading } = useQuery({
     queryKey: ["locations"],
     queryFn: getLocations
@@ -28,6 +32,20 @@ const LocationsPage = () => {
             Retrouvez tous nos points de vente iPhone Cameroun à travers le pays.
             Venez nous rendre visite pour découvrir nos produits et bénéficier de nos conseils personnalisés.
           </p>
+          
+          {/* Bouton pour la gestion des magasins (affiché seulement si l'utilisateur est admin) */}
+          {isAuthenticated && (
+            <div className="mt-6">
+              <Button 
+                onClick={() => navigate('/admin/locations')}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Settings size={16} />
+                <span>Gérer les magasins</span>
+              </Button>
+            </div>
+          )}
         </div>
 
         {isLoading ? (
