@@ -1,12 +1,12 @@
-
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link, Upload, X, Trash, Star } from "lucide-react";
+import { Link, Upload, X } from "lucide-react";
 import { uploadProductImages, deleteProductImage, setMainImage } from "@/api/products";
+import ImageEditor from "./ImageEditor";
 
 export interface ProductImage {
   id: number;
@@ -120,6 +120,21 @@ const ProductImageManager = ({
     });
   };
 
+  const handleUpdateImage = (imageId: number, newUrl: string) => {
+    // Update local state immediately for better UX
+    setExistingImages((prev: ProductImage[]): ProductImage[] => 
+      prev.map(img => img.id === imageId ? { ...img, url: newUrl } : img)
+    );
+    
+    // If it's the main image, update the main imageUrl too
+    const updatedImage = existingImages.find(img => img.id === imageId);
+    if (updatedImage?.isMain) {
+      setImageUrl(newUrl);
+    }
+    
+    toast.success("Image mise à jour");
+  };
+
   const handleTabChange = (value: string) => {
     setImageTab(value as "url" | "upload");
   };
@@ -203,7 +218,7 @@ const ProductImageManager = ({
         )}
       </div>
 
-      {/* Gestion des images existantes */}
+      {/* Gestion des images existantes avec édition individuelle */}
       {productId && existingImages.length > 0 && (
         <div className="grid grid-cols-4 items-start gap-4">
           <Label className="text-right pt-2">
@@ -212,41 +227,14 @@ const ProductImageManager = ({
           <div className="col-span-3">
             <div className="flex flex-wrap gap-2">
               {existingImages.map((image) => (
-                <div 
-                  key={image.id} 
-                  className={`relative w-24 h-24 border rounded overflow-hidden ${image.isMain ? 'border-blue-500 border-2' : ''}`}
-                >
-                  <img 
-                    src={image.url} 
-                    alt={`Image ${image.id}`} 
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-0 right-0 flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteExistingImage(image.id)}
-                      className="bg-red-500 text-white p-1 rounded-bl"
-                      title="Supprimer l'image"
-                    >
-                      <Trash className="h-3 w-3" />
-                    </button>
-                    {!image.isMain && (
-                      <button
-                        type="button"
-                        onClick={() => handleSetMainImage(image.id)}
-                        className="bg-yellow-500 text-white p-1 rounded-bl"
-                        title="Définir comme image principale"
-                      >
-                        <Star className="h-3 w-3" />
-                      </button>
-                    )}
-                  </div>
-                  {image.isMain && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-blue-500 text-white text-xs py-1 px-2 text-center">
-                      Image principale
-                    </div>
-                  )}
-                </div>
+                <ImageEditor
+                  key={image.id}
+                  image={image}
+                  onUpdate={handleUpdateImage}
+                  onDelete={handleDeleteExistingImage}
+                  onSetMain={handleSetMainImage}
+                  productId={productId}
+                />
               ))}
             </div>
           </div>

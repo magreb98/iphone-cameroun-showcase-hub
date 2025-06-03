@@ -17,22 +17,32 @@ export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        setIsLoading(true);
-        const userData = await getAuthStatus();
-        setUser(userData);
-      } catch (err) {
-        setError(err as Error);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchUser = async () => {
+    try {
+      setIsLoading(true);
+      const userData = await getAuthStatus();
+      setUser(userData);
+    } catch (err) {
+      setError(err as Error);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchUser();
   }, []);
+
+  // Function to refresh auth status
+  const refreshAuth = () => {
+    fetchUser();
+  };
+
+  // Function to clear user state (for logout)
+  const clearUser = () => {
+    setUser(null);
+  };
 
   return {
     user,
@@ -40,6 +50,8 @@ export const useAuth = () => {
     error,
     isAuthenticated: !!user,
     isAdmin: user?.isAdmin || user?.isSuperAdmin,
-    isSuperAdmin: user?.isSuperAdmin
+    isSuperAdmin: user?.isSuperAdmin,
+    refreshAuth,
+    clearUser
   };
 };

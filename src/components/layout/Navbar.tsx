@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,11 +9,13 @@ import { toast } from "sonner";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, isAuthenticated, isSuperAdmin } = useAuth();
+  const { user, isAuthenticated, isSuperAdmin, clearUser } = useAuth();
 
   const handleLogout = async () => {
     try {
       await logout();
+      // Clear user state immediately
+      clearUser();
       toast.success("Déconnexion réussie");
       // Force page reload to clear all state and redirect to home
       window.location.href = "/";
@@ -22,6 +23,7 @@ const Navbar = () => {
       toast.error("Erreur lors de la déconnexion");
       console.error(error);
       // Even if logout fails on server, clear local state
+      clearUser();
       window.location.href = "/";
     }
   };
