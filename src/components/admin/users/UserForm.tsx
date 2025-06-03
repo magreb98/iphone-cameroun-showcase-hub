@@ -119,6 +119,18 @@ const UserForm = ({ isOpen, onOpenChange, editingUser, locations }: UserFormProp
             </div>
             
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="whatsappNumber" className="text-right">WhatsApp</Label>
+              <Input 
+                id="whatsappNumber" 
+                className="col-span-3"
+                type="tel" 
+                value={userData?.whatsappNumber || ''} 
+                onChange={(e) => setUserData({...userData, whatsappNumber: e.target.value})} 
+                placeholder="+237600000000"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right">Rôle</Label>
               <div className="col-span-3 space-y-2">
                 <div className="flex items-center space-x-2">

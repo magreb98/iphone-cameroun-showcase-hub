@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,6 +75,15 @@ const LoginPage = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+            </div>
+            
+            <div className="text-center">
+              <Link 
+                to="/forgot-password" 
+                className="text-sm text-muted-foreground hover:underline"
+              >
+                Mot de passe oublié ?
+              </Link>
             </div>
           </CardContent>
           

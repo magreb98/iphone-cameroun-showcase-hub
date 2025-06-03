@@ -13,6 +13,8 @@ import ProductDetailPage from "./pages/ProductDetailPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import LocationsPage from "./pages/LocationsPage";
+import ProfilePage from "./pages/ProfilePage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 
 // Pages admin
 import LoginPage from "./pages/admin/LoginPage";
@@ -43,6 +45,8 @@ const App = () => (
             <Route path="/locations" element={<LocationsPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             
             {/* Routes admin */}
             <Route path="/admin" element={<LoginPage />} />

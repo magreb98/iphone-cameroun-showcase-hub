@@ -36,6 +36,22 @@ const User = sequelize.define('User', {
       model: 'Locations',
       key: 'id'
     }
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  whatsappNumber: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  resetPasswordCode: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  resetPasswordExpires: {
+    type: DataTypes.DATE,
+    allowNull: true
   }
 }, {
   timestamps: true,

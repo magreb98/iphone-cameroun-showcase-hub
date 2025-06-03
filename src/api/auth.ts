@@ -13,6 +13,7 @@ export interface RegisterData {
   isSuperAdmin?: boolean;
   locationId?: number | null;
   name?: string | null;
+  whatsappNumber?: string | null;
 }
 
 export interface User {
@@ -22,7 +23,31 @@ export interface User {
   isSuperAdmin: boolean;
   locationId: number | null;
   name: string | null;
+  whatsappNumber: string | null;
   token?: string;
+}
+
+export interface ProfileUpdateData {
+  name?: string;
+  email?: string;
+  currentPassword?: string;
+  newPassword?: string;
+  whatsappNumber?: string;
+}
+
+export interface ForgotPasswordData {
+  whatsappNumber: string;
+}
+
+export interface VerifyResetCodeData {
+  whatsappNumber: string;
+  code: string;
+}
+
+export interface ResetPasswordData {
+  whatsappNumber: string;
+  code: string;
+  newPassword: string;
 }
 
 export const login = async (credentials: LoginCredentials): Promise<User> => {
@@ -47,6 +72,28 @@ export const getAuthStatus = async (): Promise<User | null> => {
   } catch (error) {
     return null;
   }
+};
+
+// Profile management
+export const updateProfile = async (profileData: ProfileUpdateData): Promise<User> => {
+  const response = await api.put('/auth/profile', profileData);
+  return response.data.user;
+};
+
+// Password reset functions
+export const requestPasswordReset = async (data: ForgotPasswordData): Promise<{ message: string; verificationCode?: string }> => {
+  const response = await api.post('/auth/forgot-password', data);
+  return response.data;
+};
+
+export const verifyResetCode = async (data: VerifyResetCodeData): Promise<{ message: string; userId: number }> => {
+  const response = await api.post('/auth/verify-reset-code', data);
+  return response.data;
+};
+
+export const resetPassword = async (data: ResetPasswordData): Promise<{ message: string }> => {
+  const response = await api.post('/auth/reset-password', data);
+  return response.data;
 };
 
 // User management functions (admin)
