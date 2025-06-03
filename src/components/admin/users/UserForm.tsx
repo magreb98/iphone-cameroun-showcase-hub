@@ -63,6 +63,11 @@ const UserForm = ({ isOpen, onOpenChange, editingUser, locations }: UserFormProp
       delete submittedData.password;
     }
     
+    // Convert "none" back to null for locationId
+    if (submittedData.locationId === "none") {
+      submittedData.locationId = null;
+    }
+    
     if (submittedData.id) {
       updateMutation.mutate({ id: submittedData.id, userData: submittedData });
     } else {
@@ -157,17 +162,17 @@ const UserForm = ({ isOpen, onOpenChange, editingUser, locations }: UserFormProp
               <Label htmlFor="location" className="text-right">Emplacement</Label>
               <div className="col-span-3">
                 <Select 
-                  value={userData?.locationId?.toString() || ""} 
+                  value={userData?.locationId?.toString() || "none"} 
                   onValueChange={(value) => setUserData({
                     ...userData, 
-                    locationId: value ? parseInt(value) : null
+                    locationId: value === "none" ? null : parseInt(value)
                   })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner un emplacement" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Aucun</SelectItem>
+                    <SelectItem value="none">Aucun</SelectItem>
                     {locations.map((location) => (
                       <SelectItem key={location.id} value={location.id.toString()}>
                         {location.name}
