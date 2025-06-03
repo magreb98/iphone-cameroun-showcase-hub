@@ -9,6 +9,7 @@ interface User {
   isSuperAdmin: boolean;
   locationId: number | null;
   name: string | null;
+  whatsappNumber: string | null;
 }
 
 export const useAuth = () => {
