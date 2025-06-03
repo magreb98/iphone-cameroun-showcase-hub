@@ -36,8 +36,8 @@ const Navbar = () => {
             <Link to="/contact" className="text-gray-700 hover:text-apple-blue transition-colors">
               Contact
             </Link>
-            <Link to="/admin" className="text-gray-700 hover:text-apple-blue transition-colors">
-              Admin
+            <Link to="/admin" className="text-gray-700 hover:text-apple-blue hover:bg-white transition-colors bg-apple-blue text-white rounded px-4 py-2">
+              Login
             </Link>
           </nav>
 
