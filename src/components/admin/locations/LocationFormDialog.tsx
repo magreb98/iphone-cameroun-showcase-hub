@@ -103,18 +103,19 @@ const LocationFormDialog = ({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] dark:bg-gray-800 dark:border-gray-700">
+      <DialogContent className="sm:max-w-[800px] bg-white border-gray-200">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 dark:text-white">
+          <DialogTitle className="flex items-center gap-2 text-gray-900">
             <Building className="h-5 w-5" />
             {editingLocation?.id ? "Modifier le magasin" : "Ajouter un magasin"}
           </DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-5 py-4">
-          <div className="grid grid-cols-1 gap-5">
+        <form onSubmit={handleSubmit} className="space-y-6 py-4">
+          {/* Première ligne - Nom et Adresse */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="name" className="flex items-center gap-2 dark:text-gray-300">
+              <Label htmlFor="name" className="flex items-center gap-2 text-gray-700">
                 <Building className="h-4 w-4" /> Nom du magasin
               </Label>
               <Input 
@@ -124,12 +125,12 @@ const LocationFormDialog = ({
                 value={formData.name || ''} 
                 onChange={handleChange} 
                 required 
-                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                className="bg-white border-gray-300 text-gray-900"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="address" className="flex items-center gap-2 dark:text-gray-300">
+              <Label htmlFor="address" className="flex items-center gap-2 text-gray-700">
                 <MapPin className="h-4 w-4" /> Adresse
               </Label>
               <Input 
@@ -138,83 +139,87 @@ const LocationFormDialog = ({
                 placeholder="Adresse complète du magasin"
                 value={formData.address || ''} 
                 onChange={handleChange} 
-                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                className="bg-white border-gray-300 text-gray-900"
               />
             </div>
-            
+          </div>
+          
+          {/* Deuxième ligne - Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description" className="flex items-center gap-2 text-gray-700">
+              Description
+            </Label>
+            <Textarea 
+              id="description" 
+              name="description"
+              placeholder="Décrivez brièvement le magasin"
+              value={formData.description || ''} 
+              onChange={handleChange}
+              className="resize-none bg-white border-gray-300 text-gray-900"
+              rows={3}
+            />
+          </div>
+          
+          {/* Troisième ligne - Image */}
+          <div className="space-y-2">
+            <Label htmlFor="imageUrl" className="flex items-center gap-2 text-gray-700">
+              <Image className="h-4 w-4" /> URL de l'image
+            </Label>
+            <Input 
+              id="imageUrl" 
+              name="imageUrl"
+              placeholder="URL de l'image du magasin"
+              value={formData.imageUrl || ''} 
+              onChange={handleChange}
+              className="bg-white border-gray-300 text-gray-900"
+            />
+            {formData.imageUrl && (
+              <div className="mt-3 h-32 w-full overflow-hidden rounded-md bg-gray-100 flex items-center justify-center">
+                <img 
+                  src={formData.imageUrl} 
+                  alt="Aperçu" 
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "https://placehold.co/200x100?text=Image+non+disponible";
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Quatrième ligne - Contacts */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="description" className="flex items-center gap-2 dark:text-gray-300">
-                Description
-              </Label>
-              <Textarea 
-                id="description" 
-                name="description"
-                placeholder="Décrivez brièvement le magasin"
-                value={formData.description || ''} 
-                onChange={handleChange}
-                className="resize-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="imageUrl" className="flex items-center gap-2 dark:text-gray-300">
-                <Image className="h-4 w-4" /> URL de l'image
+              <Label htmlFor="phone" className="flex items-center gap-2 text-gray-700">
+                <Phone className="h-4 w-4" /> Téléphone
               </Label>
               <Input 
-                id="imageUrl" 
-                name="imageUrl"
-                placeholder="URL de l'image du magasin"
-                value={formData.imageUrl || ''} 
+                id="phone" 
+                name="phone"
+                placeholder="Numéro de téléphone"
+                value={formData.phone || ''} 
                 onChange={handleChange}
-                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                className="bg-white border-gray-300 text-gray-900"
               />
-              {formData.imageUrl && (
-                <div className="mt-2 h-20 w-full overflow-hidden rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                  <img 
-                    src={formData.imageUrl} 
-                    alt="Aperçu" 
-                    className="h-full w-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = "https://placehold.co/200x100?text=Image+non+disponible";
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="flex items-center gap-2 dark:text-gray-300">
-                  <Phone className="h-4 w-4" /> Téléphone
-                </Label>
-                <Input 
-                  id="phone" 
-                  name="phone"
-                  placeholder="Numéro de téléphone"
-                  value={formData.phone || ''} 
-                  onChange={handleChange}
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="whatsappNumber" className="flex items-center gap-2 dark:text-gray-300">
-                  <Share2 className="h-4 w-4" /> WhatsApp
-                </Label>
-                <Input 
-                  id="whatsappNumber" 
-                  name="whatsappNumber"
-                  placeholder="Numéro WhatsApp"
-                  value={formData.whatsappNumber || ''} 
-                  onChange={handleChange}
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                />
-              </div>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center gap-2 dark:text-gray-300">
+              <Label htmlFor="whatsappNumber" className="flex items-center gap-2 text-gray-700">
+                <Share2 className="h-4 w-4" /> WhatsApp
+              </Label>
+              <Input 
+                id="whatsappNumber" 
+                name="whatsappNumber"
+                placeholder="Numéro WhatsApp"
+                value={formData.whatsappNumber || ''} 
+                onChange={handleChange}
+                className="bg-white border-gray-300 text-gray-900"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="email" className="flex items-center gap-2 text-gray-700">
                 <Mail className="h-4 w-4" /> Email
               </Label>
               <Input 
@@ -224,24 +229,24 @@ const LocationFormDialog = ({
                 placeholder="Adresse email du magasin"
                 value={formData.email || ''} 
                 onChange={handleChange}
-                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                className="bg-white border-gray-300 text-gray-900"
               />
             </div>
           </div>
           
-          <DialogFooter className="pt-3 border-t dark:border-gray-700">
+          <DialogFooter className="pt-4 border-t border-gray-200">
             <Button 
               variant="outline" 
               onClick={() => onOpenChange(false)} 
               type="button"
-              className="dark:text-gray-300"
+              className="text-gray-700 border-gray-300"
             >
               Annuler
             </Button>
             <Button 
               type="submit" 
               disabled={createMutation.isPending || updateMutation.isPending}
-              className="ml-2"
+              className="ml-2 bg-blue-600 hover:bg-blue-700"
             >
               {editingLocation?.id ? "Mettre à jour" : "Ajouter"}
             </Button>

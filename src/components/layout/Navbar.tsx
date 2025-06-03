@@ -16,9 +16,13 @@ const Navbar = () => {
     try {
       await logout();
       toast.success("Déconnexion réussie");
+      // Force page reload to clear all state and redirect to home
       window.location.href = "/";
     } catch (error) {
       toast.error("Erreur lors de la déconnexion");
+      console.error(error);
+      // Even if logout fails on server, clear local state
+      window.location.href = "/";
     }
   };
 
@@ -71,7 +75,7 @@ const Navbar = () => {
                   <DropdownMenuItem asChild>
                     <Link to="/admin/users" className="flex items-center">
                       <Users className="mr-2 h-4 w-4" />
-                      Gestion des utilisateurs
+                      Tous les utilisateurs
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -111,7 +115,10 @@ const Navbar = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="flex items-center text-red-600">
+                  <DropdownMenuItem 
+                    onClick={handleLogout} 
+                    className="flex items-center text-red-600 cursor-pointer"
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     Déconnexion
                   </DropdownMenuItem>
@@ -203,7 +210,7 @@ const Navbar = () => {
                         onClick={() => setIsMenuOpen(false)}
                       >
                         <Users size={18} />
-                        <span>Gestion des utilisateurs</span>
+                        <span>Tous les utilisateurs</span>
                       </Link>
                     </>
                   )}
