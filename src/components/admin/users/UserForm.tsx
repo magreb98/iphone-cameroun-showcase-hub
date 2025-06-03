@@ -64,7 +64,7 @@ const UserForm = ({ isOpen, onOpenChange, editingUser, locations }: UserFormProp
     }
     
     // Convert "none" back to null for locationId
-    if (submittedData.locationId === "none") {
+    if (submittedData.locationId?.toString() === "none") {
       submittedData.locationId = null;
     }
     
