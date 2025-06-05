@@ -113,10 +113,16 @@ router.get(
         offset,
         include: [
           { model: Category, attributes: ['name'] },
-          { model: Location, attributes: ['name'] },
+          { model: Location, attributes: ['name'], required: false },
           { model: ProductImage, attributes: ['id', 'imageUrl', 'isMainImage'] }
         ],
         order: [[sortBy, orderBy]]
+      });
+
+      products.forEach(product => {
+        if (product.locationId && !product.Location) {
+          console.warn(`Warning: Product ID ${product.id} (name: "${product.name}") has locationId ${product.locationId} but no associated Location could be found.`);
+        }
       });
     
     res.json({
@@ -160,11 +166,17 @@ router.get('/user', protect, admin, async (req, res) => {
       offset,
       include: [
         { model: Category, attributes: ['name'] },
-        { model: Location, attributes: ['name'] },
+          { model: Location, attributes: ['name'], required: false },
         { model: ProductImage, attributes: ['id', 'imageUrl', 'isMainImage'] }
       ],
       order: [['createdAt', 'DESC']]
     });
+
+      products.forEach(product => {
+        if (product.locationId && !product.Location) {
+          console.warn(`Warning (user products): Product ID ${product.id} (name: "${product.name}") has locationId ${product.locationId} but no associated Location could be found.`);
+        }
+      });
     
     res.json({
       products,
@@ -194,19 +206,23 @@ router.get(
     try {
       const product = await Product.findByPk(req.params.id, {
         include: [
-        { model: Category, attributes: ['name'] },
-        { model: Location, attributes: ['name'] },
-        { model: ProductImage, attributes: ['id', 'imageUrl', 'isMainImage'] }
-      ]
-    });
+          { model: Category, attributes: ['name'] },
+          { model: Location, attributes: ['name'], required: false },
+          { model: ProductImage, attributes: ['id', 'imageUrl', 'isMainImage'] }
+        ]
+      });
     
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-    
-    res.json(product);
-  } catch (error) {
-    next(error);
+      if (!product) {
+        return res.status(404).json({ message: 'Product not found' });
+      }
+
+      if (product.locationId && !product.Location) {
+        console.warn(`Warning (single product): Product ID ${product.id} (name: "${product.name}") has locationId ${product.locationId} but no associated Location could be found.`);
+      }
+
+      res.json(product);
+    } catch (error) {
+      next(error);
   }
 });
 
@@ -289,7 +305,7 @@ router.post(
     const createdProduct = await Product.findByPk(product.id, {
       include: [
         { model: Category, attributes: ['name'] },
-        { model: Location, attributes: ['name'] },
+        { model: Location, attributes: ['name'], required: false },
         { model: ProductImage, attributes: ['id', 'imageUrl', 'isMainImage'] }
       ]
     });
@@ -572,7 +588,7 @@ router.put(
     const updatedProduct = await Product.findByPk(product.id, {
       include: [
         { model: Category, attributes: ['name'] },
-        { model: Location, attributes: ['name'] },
+        { model: Location, attributes: ['name'], required: false },
         { model: ProductImage, attributes: ['id', 'imageUrl', 'isMainImage'] }
       ]
     });
