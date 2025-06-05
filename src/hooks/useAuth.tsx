@@ -20,11 +20,35 @@ export const useAuth = () => {
   const fetchUser = async () => {
     try {
       setIsLoading(true);
+      setError(null);
+      
+      // Vérifier d'abord si un token existe
+      const token = localStorage.getItem("admin_token") || localStorage.getItem("token");
+      if (!token) {
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
       const userData = await getAuthStatus();
-      setUser(userData);
+      if (userData) {
+        setUser(userData);
+      } else {
+        // Si pas de données utilisateur, nettoyer le token
+        localStorage.removeItem("admin_token");
+        localStorage.removeItem("token");
+        setUser(null);
+      }
     } catch (err) {
+      console.error("Erreur d'authentification:", err);
       setError(err as Error);
       setUser(null);
+      
+      // En cas d'erreur 401, nettoyer les tokens
+      if ((err as any)?.response?.status === 401) {
+        localStorage.removeItem("admin_token");
+        localStorage.removeItem("token");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -41,7 +65,10 @@ export const useAuth = () => {
 
   // Function to clear user state (for logout)
   const clearUser = () => {
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("token");
     setUser(null);
+    setError(null);
   };
 
   return {

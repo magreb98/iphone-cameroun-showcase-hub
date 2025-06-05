@@ -51,25 +51,70 @@ export interface ResetPasswordData {
 }
 
 export const login = async (credentials: LoginCredentials): Promise<User> => {
-  const response = await api.post('/auth/login', credentials);
-  const { token, user } = response.data;
-  
-  // Store token in localStorage
-  localStorage.setItem('token', token);
-  
-  return { ...user, token };
+  try {
+    const response = await api.post('/auth/login', credentials);
+    const { token, user } = response.data;
+    
+    if (!token || !user) {
+      throw new Error('Réponse invalide du serveur');
+    }
+    
+    // Configurer le token pour les requêtes futures
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
+    return { ...user, token };
+  } catch (error: any) {
+    console.error('Erreur de connexion:', error);
+    
+    // Nettoyer les tokens en cas d'erreur
+    delete api.defaults.headers.common['Authorization'];
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('token');
+    
+    throw error;
+  }
 };
 
 export const logout = async (): Promise<void> => {
-  // Remove token from localStorage
-  localStorage.removeItem('token');
+  try {
+    // Nettoyer les tokens localement
+    delete api.defaults.headers.common['Authorization'];
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('token');
+    
+    // Optionnel: appel API pour invalider le token côté serveur
+    // await api.post('/auth/logout');
+  } catch (error) {
+    console.error('Erreur lors de la déconnexion:', error);
+    // Même en cas d'erreur, on nettoie localement
+  }
 };
 
 export const getAuthStatus = async (): Promise<User | null> => {
   try {
+    // Vérifier si un token existe
+    const token = localStorage.getItem('admin_token') || localStorage.getItem('token');
+    if (!token) {
+      return null;
+    }
+    
+    // Configurer l'en-tête d'autorisation si pas déjà fait
+    if (!api.defaults.headers.common['Authorization']) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+    
     const response = await api.get('/auth/me');
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Erreur lors de la vérification du statut d\'authentification:', error);
+    
+    // En cas d'erreur 401, nettoyer les tokens
+    if (error.response?.status === 401) {
+      delete api.defaults.headers.common['Authorization'];
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('token');
+    }
+    
     return null;
   }
 };
@@ -80,7 +125,6 @@ export const updateProfile = async (profileData: ProfileUpdateData): Promise<Use
   return response.data.user;
 };
 
-// Password reset functions
 export const requestPasswordReset = async (data: ForgotPasswordData): Promise<{ message: string; verificationCode?: string }> => {
   const response = await api.post('/auth/forgot-password', data);
   return response.data;
@@ -96,7 +140,6 @@ export const resetPassword = async (data: ResetPasswordData): Promise<{ message:
   return response.data;
 };
 
-// User management functions (admin)
 export const getUsers = async (): Promise<User[]> => {
   const response = await api.get('/auth/users');
   return response.data;
