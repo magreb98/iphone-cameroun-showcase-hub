@@ -18,6 +18,7 @@ import StatsOverview from "@/components/admin/dashboard/StatsOverview";
 import StoreComparison from "@/components/admin/dashboard/StoreComparison";
 import WhatsappConfig from "@/components/admin/dashboard/WhatsappConfig";
 import RecentProducts from "@/components/admin/dashboard/RecentProducts";
+import ProductImageViewer from "@/components/admin/products/ProductImageViewer";
 
 const DashboardPage = () => {
   const [selectedLocation, setSelectedLocation] = useState<number | null>(null);
@@ -98,7 +99,7 @@ const DashboardPage = () => {
         {/* Welcome Section */}
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg p-6">
           <h1 className="text-2xl font-bold mb-2">
-            Bienvenue sur votre tableau de bord, {user?.firstName || 'Admin'}!
+            Bienvenue sur votre tableau de bord, {user?.name || 'Admin'}!
           </h1>
           <p className="text-blue-100">
             Gérez facilement vos produits, catégories et configurations depuis ce centre de contrôle.
@@ -257,6 +258,19 @@ const DashboardPage = () => {
                 </Button>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Product Image Management Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center text-lg">
+              <Image className="mr-2 h-5 w-5" />
+              Gestion des Images Produits
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProductImageViewer products={products} />
           </CardContent>
         </Card>
         
