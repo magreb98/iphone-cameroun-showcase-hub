@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Eye, Plus, Trash, Edit, Star } from "lucide-react";
+import { Eye, Plus, Trash, Edit, Star, ImageIcon } from "lucide-react";
 import { Product } from "@/components/products/ProductCard";
 import { uploadProductImages, deleteProductImage, setMainImage } from "@/api/products";
 
@@ -230,7 +229,7 @@ const ProductImageViewer = ({ products }: ProductImageViewerProps) => {
               </div>
             ) : (
               <div className="text-center py-8 text-gray-500">
-                <Image className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <ImageIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                 <p>Aucune image disponible pour ce produit</p>
               </div>
             )}
