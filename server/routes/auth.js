@@ -3,11 +3,12 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const { body, validationResult } = require('express-validator');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 // Generate JWT token
 const generateToken = (id) => {
-  return jwt.sign({ id }, 'secret_key_should_be_in_env', { expiresIn: '30d' });
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
 // Generate 6-digit verification code
@@ -16,11 +17,22 @@ const generateVerificationCode = () => {
 };
 
 // Admin login
-router.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    const user = await User.findOne({ where: { email } });
+router.post(
+  '/login',
+  [
+    body('email', 'Please include a valid email').isEmail(),
+    body('password', 'Password is required').not().isEmpty(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const { email, password } = req.body;
+
+      const user = await User.findOne({ where: { email } });
     
     if (user && await user.matchPassword(password)) {
       res.json({
@@ -39,16 +51,38 @@ router.post('/login', async (req, res) => {
       res.status(401).json({ message: 'Invalid email or password' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 });
 
 // Update user profile
-router.put('/profile', protect, async (req, res) => {
-  try {
-    const { name, email, currentPassword, newPassword, whatsappNumber } = req.body;
-    
-    const user = await User.findByPk(req.user.id);
+router.put(
+  '/profile',
+  [
+    protect,
+    body('name', 'Name must be a string').optional().isString(),
+    body('email', 'Please include a valid email').optional().isEmail(),
+    body('whatsappNumber', 'WhatsApp number must be a string').optional().isString(),
+    body('newPassword', 'New password must be at least 6 characters')
+      .optional()
+      .isLength({ min: 6 }),
+    body('currentPassword').custom((value, { req }) => {
+      if (req.body.newPassword && !value) {
+        throw new Error('Current password is required when setting a new password');
+      }
+      return true;
+    }),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const { name, email, currentPassword, newPassword, whatsappNumber } = req.body;
+
+      const user = await User.findByPk(req.user.id);
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -88,16 +122,24 @@ router.put('/profile', protect, async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 });
 
 // Request password reset
-router.post('/forgot-password', async (req, res) => {
-  try {
-    const { whatsappNumber } = req.body;
-    
-    const user = await User.findOne({ where: { whatsappNumber } });
+router.post(
+  '/forgot-password',
+  [body('whatsappNumber', 'WhatsApp number is required').not().isEmpty()],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const { whatsappNumber } = req.body;
+
+      const user = await User.findOne({ where: { whatsappNumber } });
     
     if (!user) {
       return res.status(404).json({ message: 'No user found with this WhatsApp number' });
@@ -111,26 +153,38 @@ router.post('/forgot-password', async (req, res) => {
     user.resetPasswordExpires = expirationTime;
     await user.save();
     
-    // Here you would integrate with a WhatsApp API to send the code
-    // For now, we'll just return the code in the response (remove this in production)
+    // TODO: CRITICAL - Integrate with a proper WhatsApp API to send the verification code.
+    // The console.log below is for debugging ONLY and MUST be removed in a production environment.
+    // Exposing verification codes via console logs or direct API responses is a security risk.
     console.log(`Verification code for ${whatsappNumber}: ${verificationCode}`);
     
     res.json({
-      message: 'Verification code sent to your WhatsApp',
-      // Remove this line in production when integrating real WhatsApp API
-      verificationCode: verificationCode
+      message: 'Verification code sent to your WhatsApp'
+      // The verificationCode field has been removed from this response for security reasons.
+      // Ensure the code is sent via a secure channel (e.g., WhatsApp API).
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 });
 
 // Verify reset code
-router.post('/verify-reset-code', async (req, res) => {
-  try {
-    const { whatsappNumber, code } = req.body;
-    
-    const user = await User.findOne({
+router.post(
+  '/verify-reset-code',
+  [
+    body('whatsappNumber', 'WhatsApp number is required').not().isEmpty(),
+    body('code', 'Code is required and must be a 6-digit number').not().isEmpty().isLength({ min: 6, max: 6 }).isNumeric(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const { whatsappNumber, code } = req.body;
+
+      const user = await User.findOne({
       where: {
         whatsappNumber,
         resetPasswordCode: code,
@@ -146,16 +200,28 @@ router.post('/verify-reset-code', async (req, res) => {
     
     res.json({ message: 'Code verified successfully', userId: user.id });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 });
 
 // Reset password
-router.post('/reset-password', async (req, res) => {
-  try {
-    const { whatsappNumber, code, newPassword } = req.body;
-    
-    const user = await User.findOne({
+router.post(
+  '/reset-password',
+  [
+    body('whatsappNumber', 'WhatsApp number is required').not().isEmpty(),
+    body('code', 'Code is required and must be a 6-digit number').not().isEmpty().isLength({ min: 6, max: 6 }).isNumeric(),
+    body('newPassword', 'New password must be at least 6 characters').isLength({ min: 6 }),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const { whatsappNumber, code, newPassword } = req.body;
+
+      const user = await User.findOne({
       where: {
         whatsappNumber,
         resetPasswordCode: code,
@@ -176,16 +242,34 @@ router.post('/reset-password', async (req, res) => {
     
     res.json({ message: 'Password reset successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 });
 
 // Register a new user (protected, only admins can create)
-router.post('/register', protect, admin, async (req, res) => {
-  try {
-    const { email, password, isAdmin, isSuperAdmin, locationId, name, whatsappNumber } = req.body;
-    
-    const userExists = await User.findOne({ where: { email } });
+router.post(
+  '/register',
+  [
+    protect,
+    admin,
+    body('email', 'Please include a valid email').isEmail(),
+    body('password', 'Password must be at least 6 characters').isLength({ min: 6 }),
+    body('isAdmin', 'isAdmin must be a boolean').optional().isBoolean(),
+    body('isSuperAdmin', 'isSuperAdmin must be a boolean').optional().isBoolean(),
+    body('locationId', 'locationId must be an integer').optional().isInt(),
+    body('name', 'Name must be a string').optional().isString(),
+    body('whatsappNumber', 'WhatsApp number must be a string').optional().isString(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const { email, password, isAdmin, isSuperAdmin, locationId, name, whatsappNumber } = req.body;
+
+      const userExists = await User.findOne({ where: { email } });
     
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
@@ -215,7 +299,7 @@ router.post('/register', protect, admin, async (req, res) => {
       res.status(400).json({ message: 'Invalid user data' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 });
 
@@ -232,7 +316,7 @@ router.get('/me', protect, async (req, res) => {
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 });
 
@@ -244,22 +328,40 @@ router.get('/users', protect, admin, async (req, res) => {
     });
     res.json(users);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 });
 
 // Update user (admin only)
-router.put('/users/:id', protect, admin, async (req, res) => {
-  try {
-    const user = await User.findByPk(req.params.id);
-    
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+router.put(
+  '/users/:id',
+  [
+    protect,
+    admin,
+    body('email', 'Please include a valid email').optional().isEmail(),
+    body('password', 'Password must be at least 6 characters').optional().isLength({ min: 6 }),
+    body('isAdmin', 'isAdmin must be a boolean').optional().isBoolean(),
+    body('isSuperAdmin', 'isSuperAdmin must be a boolean').optional().isBoolean(),
+    body('locationId', 'locationId must be an integer').optional().isInt(),
+    body('name', 'Name must be a string').optional().isString(),
+    body('whatsappNumber', 'WhatsApp number must be a string').optional().isString(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
-    
-    const { email, password, isAdmin, isSuperAdmin, locationId, name, whatsappNumber } = req.body;
-    
-    if (email) user.email = email;
+
+    try {
+      const user = await User.findByPk(req.params.id);
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      const { email, password, isAdmin, isSuperAdmin, locationId, name, whatsappNumber } = req.body;
+
+      if (email) user.email = email;
     if (password) user.password = password;
     if (isAdmin !== undefined) user.isAdmin = isAdmin;
     if (isSuperAdmin !== undefined) user.isSuperAdmin = isSuperAdmin;
@@ -279,7 +381,7 @@ router.put('/users/:id', protect, admin, async (req, res) => {
       whatsappNumber: user.whatsappNumber
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 });
 
@@ -296,7 +398,7 @@ router.delete('/users/:id', protect, admin, async (req, res) => {
     
     res.json({ message: 'User removed' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 });
 
