@@ -1,4 +1,4 @@
-
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { Sequelize } = require('sequelize');
@@ -90,6 +90,10 @@ const sequelize = new Sequelize('iphone_cameroun', 'root', '', {
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
+
+// Global error handler middleware
+const errorHandler = require('./middleware/errorHandler');
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
